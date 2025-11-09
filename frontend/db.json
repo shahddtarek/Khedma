@@ -1,0 +1,10 @@
+{
+  "users": [
+    { "id": 1, "name": "Ali", "role": "admin" },
+    { "id": 2, "name": "Omar", "role": "user" }
+  ],
+  "products": [
+    { "id": 1, "name": "Laptop", "price": 15000 },
+    { "id": 2, "name": "Mouse", "price": 400 }
+  ]
+}
