@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Heart, Activity } from 'lucide-react';
-import meImage from '../assets/Images/c.jpg';
+import meImage from '../assets/Images/electrical.webp';
 const initialFormData = {
-    email: 'salma.ali@example.com',
-    name: 'سلمى محمد',
-    address: 'شارع الملك فهد، الرياض 1234',
-    phone: '+966 12 345 6789',
-    city:'الرياض',
-    job:'مديرة تسويق',
+    email: 'ali@example.com',
+    name: 'علي محمد',
+    address: 'شارع الملك فيصل، الجيزة 1234',
+    phone: '+201053673354',
+    city:'الجيزة',
+    job:'كهربائي',
     image:meImage
 };
 
@@ -154,16 +154,7 @@ const AccountSettingsList = () => (
     </section>
 );
 
-const EmptyStateContainer = ({ data, title }) => (
-    <section className="empty-state-section">
-        <h2 className="section-header">{title}</h2>
-        <div className="empty-state-box">
-            {data.img}
-            <h3 className="empty-state-title">{data.title}</h3>
-            
-        </div>
-    </section>
-);
+
 
 
 
@@ -377,40 +368,9 @@ const UserSettingsPage = () => {
                     color: #9ca3af;
                 }
                 
-                /* Empty States */
-                .empty-state-section {
-                    margin-top: 24px;
-                }
-                .section-header {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: #1f2937;
-                    margin-bottom: 16px;
-                }
-                .empty-state-box {
-                    background-color: #ffffff;
-                    padding: 48px;
-                    border-radius: 12px;
-                    border: 2px dashed #e5e7eb;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                    text-align: center;
-                }
-                .empty-state-title {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: #4b5563;
-                    margin-top: 16px;
-                }
-                .empty-state-description {
-                    font-size: 14px;
-                    color: #6b7280;
-                    max-width: 400px;
-                    margin: 8px auto 0;
-                }
-                .icon-large {
-                    color: #d1d5db;
-                    margin: 0 auto;
-                }
+                
+
+
             `}</style>
             
             
@@ -432,10 +392,7 @@ const UserSettingsPage = () => {
                 <AccountSettingsList />
 
                 
-                <EmptyStateContainer data={emptyStates.favorites} title="المفضلة" />
 
-                
-                <EmptyStateContainer data={emptyStates.activity} title="سجل النشاط" />
 
             </main>
         </div>
