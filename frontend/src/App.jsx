@@ -9,6 +9,7 @@ import NavBar from "./componants/navbar";
 import Service from "./pages/service-categories"
 import ProviderRegistration from "./pages/provider-registration";
 import UserSettingsPage from "./pages/user-settings";
+import HomePage from "./pages/home";
 
 function App() {
   return (
