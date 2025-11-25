@@ -6,10 +6,10 @@ import Home from "./pages/home";
 import About from "./pages/about";
 import ContactUs from "./pages/contact-us";
 import NavBar from "./componants/navbar";
-import Service from "./pages/service-categories"
+import Service from "./pages/service-categories";
 import ProviderRegistration from "./pages/provider-registration";
 import UserSettingsPage from "./pages/user-settings";
-import HomePage from "./pages/home";
+import ServiceProviderProfile from "./pages/provider-profile";
 
 function App() {
   return (
@@ -24,6 +24,7 @@ function App() {
           <Route path="/provider-registration" element={<ProviderRegistration />} />
           <Route path="/service-categories" element={<Service />} />
           <Route path="/user-settings" element={<UserSettingsPage/>}/>
+          <Route path="/provider-profile" element={<ServiceProviderProfile />} />
         </Routes>
       </div>
     </Router>
