@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Phone, Calendar, PenTool, Shield, Settings, Mail, Instagram, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Himg from '../assets/Images/H.jpg'
 import Cimg from '../assets/Images/c.jpg'
@@ -54,6 +55,7 @@ const testimonialClient = {
 };
 
 const CraftsmanCard = ({ craftsman }) => {
+    const navigate = useNavigate();
 
     const renderStars = (rating) => {
         const fullStars = Math.floor(rating);
@@ -90,7 +92,12 @@ const CraftsmanCard = ({ craftsman }) => {
 
             <div className="actions">
                 <button className="btn btn-secondary">رسالة</button>
-                <button className="btn btn-primary">ملف شخصي</button>
+                <button
+                    className="btn btn-primary"
+                    onClick={() => navigate('/provider-profile', { state: { provider: craftsman } })}
+                >
+                    ملف شخصي
+                </button>
             </div>
         </div>
     );
