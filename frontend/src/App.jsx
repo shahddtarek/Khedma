@@ -10,6 +10,8 @@ import Service from "./pages/service-categories";
 import ProviderRegistration from "./pages/provider-registration";
 import UserSettingsPage from "./pages/user-settings";
 import ServiceProviderProfile from "./pages/provider-profile";
+import LoginPage from "./pages/login";
+import RegisterPage from "./pages/register";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
           <Route path="/service-categories" element={<Service />} />
           <Route path="/user-settings" element={<UserSettingsPage/>}/>
           <Route path="/provider-profile" element={<ServiceProviderProfile />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </div>
     </Router>
@@ -32,4 +36,3 @@ function App() {
 }
 
 export default App;
-
