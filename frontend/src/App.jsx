@@ -12,7 +12,7 @@ import UserSettingsPage from "./pages/user-settings";
 import ServiceProviderProfile from "./pages/provider-profile";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
-
+import ServiceSearch from "./pages/service-search";
 function App() {
   return (
     <Router>
@@ -29,6 +29,7 @@ function App() {
           <Route path="/provider-profile" element={<ServiceProviderProfile />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/service-search" element={<ServiceSearch />} />
         </Routes>
       </div>
     </Router>
