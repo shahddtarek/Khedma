@@ -268,10 +268,10 @@ export default function NavBar() {
           </div>
         </div>
         <div className="navbar-right">
-          <Link to="/" className="nav-button nav-button-secondary">
+          <Link to="/login" className="nav-button nav-button-secondary">
             تسجيل الدخول
           </Link>
-          <Link to="/" className="nav-button nav-button-primary">
+          <Link to="/register" className="nav-button nav-button-primary">
             <span>إنشاء حساب</span>
           </Link>
         </div>
