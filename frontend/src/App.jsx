@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// pages
+
 import Home from "./pages/home";
 import About from "./pages/about";
 import ContactUs from "./pages/contact-us";
@@ -13,6 +13,8 @@ import ServiceProviderProfile from "./pages/provider-profile";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import ServiceSearch from "./pages/service-search";
+import PaymentMethod from "./pages/payment-method";
+
 function App() {
   return (
     <Router>
@@ -30,6 +32,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/service-search" element={<ServiceSearch />} />
+          <Route path="/payment-method" element={<PaymentMethod />} />
         </Routes>
       </div>
     </Router>

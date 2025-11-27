@@ -254,6 +254,12 @@ export default function NavBar() {
               الخدمات
             </Link>
             <Link 
+              to="/service-search" 
+              className={`nav-link ${isActive('/service-search') ? 'active' : ''}`}
+            >
+              اعثر على خدمتك
+            </Link>
+            <Link 
               to="/contact-us" 
               className={`nav-link ${isActive('/contact-us') ? 'active' : ''}`}
             >
