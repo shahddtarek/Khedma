@@ -1,130 +1,125 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-export default function ServicesPage() {
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // بيانات أكثر واقعية للحرفيين
-  const allWorkersData = [
-    {
-      id: 1,
-      name: "إبراهيم محمد",
-      profession: "naqash",
-      profession_ar: "نقاش",
-      distance: 1.2,
-      rating: 4.9,
-      status: "available",
-      completedJobs: 156,
-      yearsExp: 8
-    },
-    {
-      id: 2,
-      name: "يوسف محمود",
-      profession: "carpenter",
-      profession_ar: "نجار",
-      distance: 5.3,
-      rating: 4.7,
-      status: "available",
-      completedJobs: 203,
-      yearsExp: 12
-    },
-    {
-      id: 3,
-      name: "خالد علي",
-      profession: "plumber",
-      profession_ar: "سباك",
-      distance: 3.1,
-      rating: 4.5,
-      status: "busy",
-      completedJobs: 89,
-      yearsExp: 5
-    },
-    {
-      id: 4,
-      name: "عمر حسن",
-      profession: "electrician",
-      profession_ar: "كهربائي",
-      distance: 2.4,
-      rating: 4.8,
-      status: "available",
-      completedJobs: 178,
-      yearsExp: 10
-    },
-    {
-      id: 5,
-      name: "أحمد سالم",
-      profession: "hvac",
-      profession_ar: "فني تكييفات",
-      distance: 4.8,
-      rating: 4.6,
-      status: "available",
-      completedJobs: 134,
-      yearsExp: 7
-    },
-    {
-      id: 6,
-      name: "محمد عبدالله",
-      profession: "electronics",
-      profession_ar: "فني إلكترونيات",
-      distance: 6.2,
-      rating: 4.4,
-      status: "available",
-      completedJobs: 92,
-      yearsExp: 6
-    },
-    {
-      id: 7,
-      name: "حسن إبراهيم",
-      profession: "carpenter",
-      profession_ar: "نجار",
-      distance: 3.7,
-      rating: 4.9,
-      status: "busy",
-      completedJobs: 245,
-      yearsExp: 15
-    },
-    {
-      id: 8,
-      name: "سعيد أحمد",
-      profession: "plumber",
-      profession_ar: "سباك",
-      distance: 2.1,
-      rating: 4.7,
-      status: "available",
-      completedJobs: 167,
-      yearsExp: 9
-    }
-  ];
-
-  const categories = [
-    { key: "all", name: "الكل", icon: "🔧" },
-    { key: "electrician", name: "الكهرباء", icon: "⚡" },
-    { key: "plumber", name: "السباكة", icon: "🚰" },
-    { key: "carpenter", name: "النجارة", icon: "🪚" },
-    { key: "hvac", name: "فني تكييفات", icon: "❄️" },
-    { key: "naqash", name: "نقاشة", icon: "🎨" },
-    { key: "electronics", name: "فني إلكترونيات", icon: "🔌" }
-  ];
-
-  // دالة لفتح صفحة الدفع
-  const handleOrderNow = (worker) => {
-    navigate('/payment-method', { state: { provider: worker } });
-  };
-
-  // دالة لفتح صفحة الملف الشخصي
-  const handleViewProfile = (worker) => {
-    navigate('/provider-profile', { state: { provider: worker } });
-  };
-
-  // تصفية البيانات
-  const filteredWorkers = allWorkersData.filter(worker => {
-    const matchesCategory = selectedCategory === 'all' || worker.profession === selectedCategory;
-    const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         worker.profession_ar.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+export default function PaymentPage() {
+  const location = useLocation();
+  const provider = location?.state?.provider;
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState('digital');
+  const [formData, setFormData] = useState({
+    cardNumber: '',
+    expDate: '',
+    cvv: '',
+    cardName: ''
   });
+  const [errors, setErrors] = useState({});
+
+  // معلومات الخدمة - استخدام البيانات من provider أو القيم الافتراضية
+  const serviceInfo = {
+    name: provider ? `خدمة ${provider.profession_ar}` : 'خدمة نجار محترف',
+    price: 100,
+    workerName: provider?.name || 'يوسف محمود',
+    rating: provider?.rating || 4.7,
+    duration: '2-3 ساعات'
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+    setCurrentStep(1);
+    setErrors({});
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentStep(1);
+    setFormData({
+      cardNumber: '',
+      expDate: '',
+      cvv: '',
+      cardName: ''
+    });
+    setErrors({});
+  };
+
+  const handleContinue = () => {
+    if (paymentMethod === 'cod') {
+      // محاكاة التحقق من تسجيل الدخول
+      const isLoggedIn = false; // غير هذه القيمة لـ true لاختبار حالة تسجيل الدخول
+      
+      if (isLoggedIn) {
+        setCurrentStep(3);
+      } else {
+        alert('لإتمام الطلب بالدفع عند الاستلام، يرجى تسجيل الدخول أولاً.');
+        closeModal();
+      }
+    } else {
+      setCurrentStep(2);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.cardName.trim()) {
+      newErrors.cardName = 'اسم حامل البطاقة مطلوب';
+    }
+    
+    if (!formData.cardNumber.trim() || formData.cardNumber.replace(/\s/g, '').length !== 16) {
+      newErrors.cardNumber = 'رقم البطاقة يجب أن يكون 16 رقم';
+    }
+    
+    if (!formData.expDate.trim() || !/^\d{2}\/\d{2}$/.test(formData.expDate)) {
+      newErrors.expDate = 'التاريخ يجب أن يكون بصيغة MM/YY';
+    }
+    
+    if (!formData.cvv.trim() || formData.cvv.length !== 3) {
+      newErrors.cvv = 'CVV يجب أن يكون 3 أرقام';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      // محاكاة معالجة الدفع
+      setTimeout(() => {
+        setCurrentStep(3);
+      }, 500);
+    }
+  };
+
+  const formatCardNumber = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || '';
+    const parts = [];
+    
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    
+    return parts.length ? parts.join(' ') : value;
+  };
+
+  const handleCardNumberChange = (e) => {
+    const formatted = formatCardNumber(e.target.value);
+    if (formatted.replace(/\s/g, '').length <= 16) {
+      setFormData({...formData, cardNumber: formatted});
+    }
+  };
+
+  const handleExpDateChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4);
+    }
+    setFormData({...formData, expDate: value});
+  };
 
   return (
     <div className="app-container">
@@ -143,431 +138,666 @@ export default function ServicesPage() {
           background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #f8fafc 100%);
           direction: rtl;
           padding: 40px 20px;
-        }
-
-        .main-container {
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .header-section {
-          text-align: center;
-          margin-bottom: 48px;
-        }
-
-        .main-title {
-          font-size: clamp(36px, 6vw, 56px);
-          font-weight: 700;
-          background: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 16px;
-        }
-
-        .subtitle {
-          font-size: clamp(16px, 2vw, 20px);
-          color: #6B7280;
-          margin-bottom: 32px;
-        }
-
-        .search-container {
-          max-width: 600px;
-          margin: 0 auto;
-          position: relative;
-        }
-
-        .search-wrapper {
           display: flex;
           align-items: center;
-          background: rgba(255, 255, 255, 0.9);
+          justify-content: center;
+        }
+
+        .service-card {
+          max-width: 500px;
+          width: 100%;
+          background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(20px);
-          border-radius: 50px;
-          padding: 8px 24px;
-          box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
           border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .search-icon {
-          color: #3B82F6;
-          font-size: 20px;
-          margin-left: 12px;
-        }
-
-        .search-input {
-          flex: 1;
-          border: none;
-          outline: none;
-          background: transparent;
-          font-size: 16px;
-          padding: 12px 0;
-          color: #1F2937;
-        }
-
-        .search-input::placeholder {
-          color: #9CA3AF;
-        }
-
-        .categories-section {
-          margin: 48px 0;
+        .card-header {
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          padding: 32px;
           text-align: center;
+          color: white;
         }
 
-        .categories-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          justify-content: center;
-          max-width: 900px;
-          margin: 0 auto;
+        .service-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
         }
 
-        .category-btn {
-          padding: 12px 24px;
-          border-radius: 50px;
-          border: 2px solid #E5E7EB;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          color: #4B5563;
-          font-weight: 600;
-          font-size: 16px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .service-title {
+          font-size: 24px;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+
+        .worker-info {
+          font-size: 14px;
+          opacity: 0.9;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
         }
 
-        .category-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
-          border-color: #3B82F6;
-        }
-
-        .category-btn.active {
-          background: linear-gradient(135deg, #3B82F6, #38BDF8);
-          color: white;
-          border-color: transparent;
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-        }
-
-        .results-section {
-          margin-top: 48px;
-        }
-
-        .results-header {
-          font-size: 24px;
-          font-weight: 700;
-          color: #1F2937;
-          margin-bottom: 32px;
-          text-align: center;
-        }
-
-        .workers-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
-        }
-
-        .worker-card {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(20px);
-          border-radius: 20px;
-          overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .worker-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
-        }
-
-        .card-image {
-          width: 100%;
-          height: 200px;
-          background: linear-gradient(135deg, #60A5FA, #38BDF8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-
-        .placeholder-icon {
-          font-size: 64px;
-          opacity: 0.3;
-        }
-
-        .status-badge {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          padding: 6px 16px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          backdrop-filter: blur(10px);
-        }
-
-        .status-available {
-          background: rgba(34, 197, 94, 0.9);
-          color: white;
-        }
-
-        .status-busy {
-          background: rgba(239, 68, 68, 0.9);
-          color: white;
-        }
-
         .card-body {
-          padding: 20px;
+          padding: 32px;
         }
 
-        .card-header-row {
+        .service-details {
+          margin-bottom: 24px;
+        }
+
+        .detail-row {
           display: flex;
           justify-content: space-between;
-          align-items: start;
-          margin-bottom: 12px;
-        }
-
-        .worker-info h3 {
-          font-size: 18px;
-          font-weight: 700;
-          color: #1F2937;
-          margin-bottom: 4px;
-        }
-
-        .profession {
-          font-size: 14px;
-          color: #6B7280;
-        }
-
-        .rating-badge {
-          display: flex;
           align-items: center;
-          gap: 4px;
-          background: linear-gradient(135deg, #FCD34D, #F59E0B);
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-weight: 700;
-          color: white;
-          font-size: 14px;
-        }
-
-        .stats-row {
-          display: flex;
-          gap: 16px;
-          margin: 16px 0;
           padding: 12px 0;
-          border-top: 1px solid #F3F4F6;
           border-bottom: 1px solid #F3F4F6;
         }
 
-        .stat-item {
-          flex: 1;
-          text-align: center;
+        .detail-row:last-child {
+          border-bottom: none;
         }
 
-        .stat-value {
-          font-size: 16px;
-          font-weight: 700;
-          color: #3B82F6;
-          display: block;
-        }
-
-        .stat-label {
-          font-size: 12px;
-          color: #6B7280;
-          margin-top: 4px;
-        }
-
-        .distance-info {
+        .detail-label {
           color: #6B7280;
           font-size: 14px;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
         }
 
-        .card-actions {
+        .detail-value {
+          font-weight: 600;
+          color: #1F2937;
+        }
+
+        .price-section {
+          background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+          padding: 20px;
+          border-radius: 16px;
+          margin-bottom: 24px;
+        }
+
+        .price-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .price-label {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1F2937;
+        }
+
+        .price-value {
+          font-size: 32px;
+          font-weight: 700;
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .pay-button {
+          width: 100%;
+          padding: 16px;
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          color: white;
+          border: none;
+          border-radius: 16px;
+          font-size: 18px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .pay-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 20px;
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 24px;
+          width: 100%;
+          max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+          padding: 24px;
+          border-bottom: 1px solid #F3F4F6;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .modal-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: #1F2937;
+        }
+
+        .close-button {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #F3F4F6;
+          color: #6B7280;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .close-button:hover {
+          background: #E5E7EB;
+          color: #1F2937;
+        }
+
+        .modal-body {
+          padding: 24px;
+        }
+
+        .invoice-list {
+          list-style: none;
+          margin-bottom: 24px;
+        }
+
+        .invoice-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 12px 0;
+          border-bottom: 1px solid #F3F4F6;
+        }
+
+        .invoice-item:last-child {
+          border-bottom: none;
+          font-weight: 700;
+          font-size: 18px;
+          color: #1F2937;
+          padding-top: 16px;
+          margin-top: 8px;
+          border-top: 2px solid #3B82F6;
+        }
+
+        .payment-methods {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
+          margin-top: 24px;
+        }
+
+        .payment-option {
+          display: flex;
+          align-items: center;
+          padding: 16px;
+          border: 2px solid #E5E7EB;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .payment-option:hover {
+          border-color: #3B82F6;
+          background: #EFF6FF;
+        }
+
+        .payment-option.selected {
+          border-color: #3B82F6;
+          background: #EFF6FF;
+        }
+
+        .payment-option input[type="radio"] {
+          margin-left: 12px;
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+        }
+
+        .payment-label {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+        }
+
+        .payment-icon {
+          font-size: 24px;
+        }
+
+        .payment-text {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .payment-name {
+          font-weight: 600;
+          color: #1F2937;
+        }
+
+        .payment-desc {
+          font-size: 12px;
+          color: #6B7280;
+        }
+
+        .form-group {
+          margin-bottom: 20px;
+        }
+
+        .form-label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 600;
+          color: #374151;
+          font-size: 14px;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #E5E7EB;
+          border-radius: 12px;
+          font-size: 16px;
+          transition: all 0.3s ease;
+          background: white;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: #3B82F6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input.error {
+          border-color: #EF4444;
+        }
+
+        .error-message {
+          color: #EF4444;
+          font-size: 12px;
+          margin-top: 6px;
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 16px;
+        }
+
+        .card-preview {
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          padding: 24px;
+          border-radius: 16px;
+          color: white;
+          margin-bottom: 24px;
+          box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .card-chip {
+          width: 40px;
+          height: 30px;
+          background: linear-gradient(135deg, #FCD34D, #F59E0B);
+          border-radius: 6px;
+          margin-bottom: 24px;
+        }
+
+        .card-number {
+          font-size: 20px;
+          letter-spacing: 3px;
+          margin-bottom: 16px;
+          font-family: 'Courier New', monospace;
+        }
+
+        .card-info {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          opacity: 0.9;
+        }
+
+        .success-container {
+          text-align: center;
+          padding: 40px 20px;
+        }
+
+        .success-icon {
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, #10B981, #34D399);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 24px;
+          font-size: 40px;
+        }
+
+        .success-title {
+          font-size: 24px;
+          font-weight: 700;
+          color: #1F2937;
+          margin-bottom: 12px;
+        }
+
+        .success-message {
+          color: #6B7280;
+          margin-bottom: 8px;
+        }
+
+        .order-number {
+          font-size: 18px;
+          font-weight: 700;
+          color: #3B82F6;
+          margin-bottom: 24px;
+        }
+
+        .modal-footer {
+          padding: 20px 24px;
+          border-top: 1px solid #F3F4F6;
+          display: flex;
+          gap: 12px;
         }
 
         .btn {
+          flex: 1;
           padding: 12px 24px;
-          border-radius: 12px;
           border: none;
+          border-radius: 12px;
           font-weight: 600;
-          font-size: 14px;
+          font-size: 16px;
           cursor: pointer;
           transition: all 0.3s ease;
-          text-align: center;
+        }
+
+        .btn-secondary {
+          background: #F3F4F6;
+          color: #6B7280;
+        }
+
+        .btn-secondary:hover {
+          background: #E5E7EB;
         }
 
         .btn-primary {
           background: linear-gradient(135deg, #3B82F6, #38BDF8);
           color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
 
-        .btn-secondary {
-          background: white;
-          color: #3B82F6;
-          border: 2px solid #3B82F6;
+        .btn-success {
+          background: linear-gradient(135deg, #10B981, #34D399);
+          color: white;
         }
 
-        .btn-secondary:hover {
-          background: #EFF6FF;
-        }
-
-        .no-results {
-          text-align: center;
-          padding: 60px 20px;
-          color: #6B7280;
-        }
-
-        .no-results-icon {
-          font-size: 64px;
-          margin-bottom: 16px;
-          opacity: 0.3;
-        }
-
-        .no-results-text {
-          font-size: 20px;
-          font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-          .workers-grid {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        @media (max-width: 640px) {
+          .form-row {
+            grid-template-columns: 1fr;
           }
           
-          .categories-grid {
-            gap: 8px;
-          }
-          
-          .category-btn {
-            padding: 10px 18px;
-            font-size: 14px;
+          .modal-content {
+            margin: 0;
+            border-radius: 16px;
           }
         }
       `}</style>
 
-      <div className="main-container">
-        <header className="header-section">
-          <h1 className="main-title">خدماتنا</h1>
-          <p className="subtitle">أهلاً بك في خدمة لتقديم خدمات الحرفيين المحترفين</p>
-          
-          <div className="search-container">
-            <div className="search-wrapper">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="ابحث بالاسم أو المهنة..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className="service-card">
+        <div className="card-header">
+          <div className="service-icon">🔨</div>
+          <h1 className="service-title">{serviceInfo.name}</h1>
+          <div className="worker-info">
+            <span>مع {serviceInfo.workerName}</span>
+            <span>⭐ {serviceInfo.rating}</span>
+          </div>
+        </div>
+
+        <div className="card-body">
+          <div className="service-details">
+            <div className="detail-row">
+              <span className="detail-label">المدة المتوقعة</span>
+              <span className="detail-value">⏱ {serviceInfo.duration}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">نوع الخدمة</span>
+              <span className="detail-value">نجارة منزلية</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">الضمان</span>
+              <span className="detail-value">✓ 7 أيام</span>
             </div>
           </div>
-        </header>
 
-        <section className="categories-section">
-          <div className="categories-grid">
-            {categories.map(category => (
-              <button
-                key={category.key}
-                className={`category-btn ${selectedCategory === category.key ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category.key)}
-              >
-                <span>{category.icon}</span>
-                <span>{category.name}</span>
-              </button>
-            ))}
+          <div className="price-section">
+            <div className="price-row">
+              <span className="price-label">الإجمالي</span>
+              <span className="price-value">{serviceInfo.price} جنيه</span>
+            </div>
           </div>
-        </section>
 
-        <section className="results-section">
-          <h2 className="results-header">
-            {filteredWorkers.length > 0
-              ? `وجدنا ${filteredWorkers.length} حرفي متاح`
-              : 'نتائج البحث'}
-          </h2>
-
-          {filteredWorkers.length > 0 ? (
-            <div className="workers-grid">
-              {filteredWorkers.map(worker => (
-                <div key={worker.id} className="worker-card">
-                  <div className="card-image">
-                    <span className="placeholder-icon">👷</span>
-                    <span className={`status-badge ${worker.status === 'available' ? 'status-available' : 'status-busy'}`}>
-                      {worker.status === 'available' ? '✓ متاح الآن' : '⏱ مشغول'}
-                    </span>
-                  </div>
-
-                  <div className="card-body">
-                    <div className="card-header-row">
-                      <div className="worker-info">
-                        <h3>{worker.name}</h3>
-                        <p className="profession">{worker.profession_ar}</p>
-                      </div>
-                      <div className="rating-badge">
-                        <span>⭐</span>
-                        <span>{worker.rating}</span>
-                      </div>
-                    </div>
-
-                    <div className="stats-row">
-                      <div className="stat-item">
-                        <span className="stat-value">{worker.completedJobs}</span>
-                        <span className="stat-label">عملية منجزة</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-value">{worker.yearsExp}</span>
-                        <span className="stat-label">سنوات خبرة</span>
-                      </div>
-                    </div>
-
-                    <div className="distance-info">
-                      <span>📍</span>
-                      <span>على بعد {worker.distance} كم</span>
-                    </div>
-
-                    <div className="card-actions">
-                      <button 
-                        className="btn btn-primary"
-                        onClick={() => handleOrderNow(worker)}
-                      >
-                        اطلب الآن
-                      </button>
-                      <button 
-                        className="btn btn-secondary"
-                        onClick={() => handleViewProfile(worker)}
-                      >
-                        عرض الملف الشخصي
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="no-results">
-              <div className="no-results-icon">🔍</div>
-              <p className="no-results-text">لم نجد نتائج مطابقة لبحثك</p>
-              <p style={{marginTop: '12px', color: '#9CA3AF'}}>جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
-            </div>
-          )}
-        </section>
+          <button className="pay-button" onClick={openModal}>
+            ادفع الآن واحجز الخدمة
+          </button>
+        </div>
       </div>
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {currentStep === 1 && 'إتمام عملية الدفع'}
+                {currentStep === 2 && 'أدخل بيانات البطاقة'}
+                {currentStep === 3 && 'تم الدفع بنجاح'}
+              </h2>
+              <button className="close-button" onClick={closeModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {currentStep === 1 && (
+                <>
+                  <ul className="invoice-list">
+                    <li className="invoice-item">
+                      <span>تأكيد حجز الخدمة</span>
+                      <span>{serviceInfo.price} جنيه</span>
+                    </li>
+                    <li className="invoice-item">
+                      <span>رسوم الخدمة</span>
+                      <span>مجاناً</span>
+                    </li>
+                    <li className="invoice-item">
+                      <span>الإجمالي</span>
+                      <span>{serviceInfo.price} جنيه</span>
+                    </li>
+                  </ul>
+
+                  <div className="payment-methods">
+                    <label className={`payment-option ${paymentMethod === 'digital' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="digital"
+                        checked={paymentMethod === 'digital'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <div className="payment-label">
+                        <span className="payment-icon">💳</span>
+                        <div className="payment-text">
+                          <span className="payment-name">دفع رقمي</span>
+                          <span className="payment-desc">بطاقة ائتمانية أو مدى</span>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className={`payment-option ${paymentMethod === 'cod' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={paymentMethod === 'cod'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <div className="payment-label">
+                        <span className="payment-icon">💵</span>
+                        <div className="payment-text">
+                          <span className="payment-name">الدفع عند الاستلام</span>
+                          <span className="payment-desc">ادفع نقداً بعد إتمام الخدمة</span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <>
+                  <div className="card-preview">
+                    <div className="card-chip"></div>
+                    <div className="card-number">
+                      {formData.cardNumber || '•••• •••• •••• ••••'}
+                    </div>
+                    <div className="card-info">
+                      <div>
+                        <div style={{fontSize: '10px', marginBottom: '4px'}}>اسم حامل البطاقة</div>
+                        <div>{formData.cardName || 'الاسم الكامل'}</div>
+                      </div>
+                      <div>
+                        <div style={{fontSize: '10px', marginBottom: '4px'}}>تاريخ الانتهاء</div>
+                        <div>{formData.expDate || 'MM/YY'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                      <label className="form-label">اسم حامل البطاقة</label>
+                      <input
+                        type="text"
+                        className={`form-input ${errors.cardName ? 'error' : ''}`}
+                        placeholder="الاسم كما يظهر على البطاقة"
+                        value={formData.cardName}
+                        onChange={(e) => setFormData({...formData, cardName: e.target.value})}
+                      />
+                      {errors.cardName && <div className="error-message">{errors.cardName}</div>}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">رقم البطاقة</label>
+                      <input
+                        type="text"
+                        className={`form-input ${errors.cardNumber ? 'error' : ''}`}
+                        placeholder="0000 0000 0000 0000"
+                        value={formData.cardNumber}
+                        onChange={handleCardNumberChange}
+                      />
+                      {errors.cardNumber && <div className="error-message">{errors.cardNumber}</div>}
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">تاريخ الانتهاء</label>
+                        <input
+                          type="text"
+                          className={`form-input ${errors.expDate ? 'error' : ''}`}
+                          placeholder="MM/YY"
+                          value={formData.expDate}
+                          onChange={handleExpDateChange}
+                          maxLength="5"
+                        />
+                        {errors.expDate && <div className="error-message">{errors.expDate}</div>}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">CVV</label>
+                        <input
+                          type="text"
+                          className={`form-input ${errors.cvv ? 'error' : ''}`}
+                          placeholder="123"
+                          value={formData.cvv}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            if (value.length <= 3) {
+                              setFormData({...formData, cvv: value});
+                            }
+                          }}
+                          maxLength="3"
+                        />
+                        {errors.cvv && <div className="error-message">{errors.cvv}</div>}
+                      </div>
+                    </div>
+                  </form>
+                </>
+              )}
+
+              {currentStep === 3 && (
+                <div className="success-container">
+                  <div className="success-icon">✓</div>
+                  <h3 className="success-title">تم الدفع بنجاح!</h3>
+                  <p className="success-message">تم تأكيد حجزك بنجاح</p>
+                  <p className="order-number">رقم العملية: #ORD-{Math.floor(Math.random() * 100000)}</p>
+                  <p className="success-message" style={{fontSize: '14px'}}>
+                    سيتم التواصل معك قريباً لتأكيد موعد الخدمة
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              {currentStep === 1 && (
+                <>
+                  <button className="btn btn-secondary" onClick={closeModal}>
+                    إلغاء
+                  </button>
+                  <button className="btn btn-primary" onClick={handleContinue}>
+                    متابعة
+                  </button>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <>
+                  <button className="btn btn-secondary" onClick={() => setCurrentStep(1)}>
+                    رجوع
+                  </button>
+                  <button className="btn btn-success" onClick={handleSubmit}>
+                    تأكيد الدفع
+                  </button>
+                </>
+              )}
+
+              {currentStep === 3 && (
+                <button className="btn btn-primary" onClick={closeModal}>
+                  تم
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
