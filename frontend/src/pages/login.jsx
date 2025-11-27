@@ -90,6 +90,7 @@ export default function LoginPage() {
           position: relative;
           z-index: 1;
           animation: slideUp 0.6s ease-out;
+          margin-top:45px;
         }
 
         @keyframes slideUp {
