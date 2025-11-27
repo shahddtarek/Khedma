@@ -50,13 +50,17 @@ export default function ServiceProviderProfile() {
     }
   ]);
 
-  const providerNameFromHome = location?.state?.provider?.name;
+  const providerFromState = location?.state?.provider;
   const provider = {
-    name: providerNameFromHome || 'مصطفى عبد الله',
-    job: 'سباك خبير',
-    summary: 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.',
-    rating: 4.8,
-    reviewsCount: 125
+    name: providerFromState?.name || 'مصطفى عبد الله',
+    job: providerFromState ? `${providerFromState.profession_ar} محترف` : 'سباك خبير',
+    summary: providerFromState 
+      ? `خبرة أكثر من ${providerFromState.yearsExp || 10} سنوات في أعمال ${providerFromState.profession_ar}. موثوق من خدمة.`
+      : 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.',
+    rating: providerFromState?.rating || 4.8,
+    reviewsCount: providerFromState?.completedJobs || 125,
+    profession: providerFromState?.profession || 'plumber',
+    profession_ar: providerFromState?.profession_ar || 'سباك'
   };
 
   const services = [
@@ -722,7 +726,7 @@ export default function ServiceProviderProfile() {
               <section className="card">
                 <div className="profile-header">
                   <div className="avatar-wrapper">
-                    <div className="avatar">م</div>
+                    <div className="avatar">{provider.name.charAt(0)}</div>
                     <div className="verified-badge">
                       <span style={{ fontSize: '14px' }}>✓</span>
                     </div>
