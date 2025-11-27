@@ -153,6 +153,7 @@ export default function ServicesPage() {
         .header-section {
           text-align: center;
           margin-bottom: 48px;
+          margin-top: 20px;
         }
 
         .main-title {
