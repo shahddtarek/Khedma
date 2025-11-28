@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Heart, Activity } from 'lucide-react';
+import { ChevronLeft, Heart, Activity, Sparkles, ArrowLeft } from 'lucide-react';
 import meImage from '../assets/Images/electrical.webp';
+
 const initialFormData = {
     email: 'ali@example.com',
     name: 'علي محمد',
     address: 'شارع الملك فيصل، الجيزة 1234',
     phone: '+201053673354',
-    city:'الجيزة',
-    job:'كهربائي',
-    image:meImage
+    city: 'الجيزة',
+    job: 'كهربائي',
+    image: meImage
 };
-
 
 const settingsItems = [
     { 
@@ -21,23 +21,18 @@ const settingsItems = [
         title: "تفضيلات الإشعارات", 
         description: "تحكم في الإشعارات التي تصلك من الخدمة." 
     },
-
 ];
-
 
 const emptyStates = {
     favorites: {
         img: <Heart size={64} className="icon-large text-gray-300 mx-auto" />,
         title: "لا توجد مفضلات حالياً",
-        
     },
     activity: {
         img: <Activity size={64} className="icon-large text-gray-300 mx-auto" />,
         title: "لا توجد أنشطة حالياً",
     }
 };
-
-
 
 const ProfileCard = ({ user }) => (
   <div className="profile-card">
@@ -66,15 +61,16 @@ const PersonalInfoForm = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log('Saving changes:', formData);
-        // عرض رسالة نجاح مؤقتة
     };
 
     return (
         <section className="personal-info-section">
-            <h2 className="section-title">معلوماتي الشخصية</h2>
+            <div className="section-header">
+                <Sparkles size={24} color="#3B82F6" />
+                <h2 className="section-title">معلوماتي الشخصية</h2>
+            </div>
             
             <form onSubmit={handleSubmit}>
-                
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">البريد الإلكتروني</label>
@@ -98,8 +94,7 @@ const PersonalInfoForm = () => {
                     </div>
                 </div>
 
-               
-                <div className="form-row mb-6">
+                <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="address" className="form-label">العنوان</label>
                         <input 
@@ -122,12 +117,10 @@ const PersonalInfoForm = () => {
                     </div>
                 </div>
 
-                <div className="text-right">
-                    <button 
-                        type="submit" 
-                        className="save-btn"
-                    >
+                <div className="form-actions">
+                    <button type="submit" className="save-btn">
                         حفظ التغييرات
+                        <ArrowLeft size={20} style={{ marginRight: '8px' }} />
                     </button>
                 </div>
             </form>
@@ -137,12 +130,15 @@ const PersonalInfoForm = () => {
 
 const AccountSettingsList = () => (
     <section className="settings-list-container">
-        <h2 className="section-title">إعدادات الحساب</h2>
+        <div className="section-header">
+            <Sparkles size={24} color="#3B82F6" />
+            <h2 className="section-title">إعدادات الحساب</h2>
+        </div>
         
         {settingsItems.map((item, index) => (
             <div 
                 key={index} 
-                className={`setting-item ${index < settingsItems.length - 1 ? 'border-bottom' : ''}`}
+                className="setting-item"
             >
                 <div className="setting-details">
                     <h3 className="setting-title">{item.title}</h3>
@@ -154,231 +150,19 @@ const AccountSettingsList = () => (
     </section>
 );
 
-
-
-
-
 const UserSettingsPage = () => {
-
     return (
-        <div className="user-settings-page" dir="rtl">
-            
-            <style jsx="true">{`
-                /* General Styles */
-                .user-settings-page {
-                    background-color: #f3f5f8;
-                    fontFamily: "Tajawal, Tahoma, Arial, sans-serif"
-                }
-                .main-content {
-                    max-width: 1280px;
-                    margin: 0 auto;
-                    padding: 32px 16px;
-                }
-                .page-title {
-                    font-size: 32px;
-                    font-weight: 700;
-                    color: #1f2937;
-                    margin-bottom: 24px;
-                }
-                .text-right {
-                    text-align: right;
-                }
-                .border-bottom {
-                    border-bottom: 1px solid #f3f4f6;
-                }
-                
-                /* Layout Grid */
-                .profile-grid {
-                    display: grid;
-                    grid-template-columns: 1fr; /* Default to single column */
-                    gap: 24px;
-                }
-                
-                @media (min-width: 768px) {
-                    .profile-grid {
-                        grid-template-columns: 2fr 1fr; /* Two columns for desktop */
-                    }
-                    .nav-links {
-                        display: flex;
-                    }
-                }
-                
-                /* Profile Card */
-                .profile-card {
-                    background-color: #ffffff;
-                    padding: 24px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-align: right;
-                    height: fit-content;
-                    order: -1; /* For mobile, put card on top */
-                }
-
-                .profile-card-content {
-                    display: flex;
-                    justify-content: space-between;
-                    width: 100%;
-                }
-                
-                @media (min-width: 768px) {
-                    .profile-card {
-                        text-align: right;
-                    }
-                    .profile-card-content {
-                        flex-direction: row-reverse; /* Align text right of image */
-                        align-items: flex-start;
-                        text-align: right;
-                    }
-                    .profile-text-wrapper {
-                        text-align: right; 
-                        margin-right: 16px;
-                    }
-                    .profile-avatar {
-                         margin-bottom: 0 !important;
-                    }
-                }
-                .profile-text-wrapper {
-                    /* نأخذ المساحة المتاحة وندفع النصوص لليمين */
-                    text-align: right; 
- 
-                    margin-right: 16px; 
-                }
-                .profile-avatar {
-                    width: 100px;
-                    height: 100px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    padding: 2px;
-                    margin-bottom: 12px;
-                }
-                .profile-name {
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: #1f2937;
-                }
-                .profile-detail {
-                    font-size: 14px;
-                    color: #6b7280;
-                    margin-top: 4px;
-                }
-                
-                /* Personal Info Form */
-                .personal-info-section {
-                    background-color: #ffffff;
-                    padding: 24px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                }
-                .section-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: #1f2937;
-                    padding-bottom: 12px;
-                    margin-bottom: 16px;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-                .form-row {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                    margin-bottom: 16px;
-                }
-                @media (min-width: 768px) {
-                    .form-row {
-                        grid-template-columns: 1fr 1fr;
-                    }
-                }
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .form-label {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: #4b5563;
-                    margin-bottom: 4px;
-                }
-                .form-input {
-                    padding: 12px;
-                    border: 1px solid #d1d5db;
-                    border-radius: 8px;
-                    background-color: #f9fafb;
-                    transition: border-color 0.15s;
-                    text-align: right;
-                }
-                .form-input:focus {
-                    border-color: #205c9d;
-                    outline: none;
-                }
-                .save-btn {
-                    background-color: #4a74ff;
-                    color: #ffffff;
-                    padding: 8px 24px;
-                    border-radius: 8px;
-                    border: none;
-                    font-weight: 600;
-                    transition: background-color 0.15s, box-shadow 0.15s;
-                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                    cursor: pointer;
-                    margin-top: 24px;
-                }
-                .save-btn:hover {
-                    background-color: #456ceeff;
-                }
-                
-                /* Account Settings List */
-                .settings-list-container {
-                    background-color: #ffffff;
-                    padding: 24px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                    margin-top: 24px;
-                }
-                .setting-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 16px 0;
-                    cursor: pointer;
-                    transition: background-color 0.15s;
-                    padding-left: 16px;
-                    padding-right: 16px;
-                    margin: 0 -16px;
-                }
-                .setting-item:hover {
-                    background-color: #f9fafb;
-                }
-                .setting-details {
-                    text-align: right;
-                }
-                .setting-title {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: #4b5563;
-                }
-                .setting-description {
-                    font-size: 14px;
-                    color: #9ca3af;
-                    margin-top: 4px;
-                }
-                .chevron-icon {
-                    color: #9ca3af;
-                }
-                
-                
-
-
-            `}</style>
-            
-            
-            
+        <div className="page-wrapper" dir="rtl">
             <main className="main-content">
-                <h1 className="page-title">إدارة الملف الشخصي</h1>
+                <div className="page-header">
+                    <h1 className="main-heading">
+                        إدارة <span className="highlight">الملف الشخصي</span>
+                    </h1>
+                    <p className="main-subheading">
+                        قم بإدارة معلوماتك الشخصية وإعدادات حسابك
+                    </p>
+                </div>
 
-                
                 <div className="profile-grid">
                     <div className="form-column">
                         <PersonalInfoForm />
@@ -388,13 +172,364 @@ const UserSettingsPage = () => {
                     </div>
                 </div>
 
-               
                 <AccountSettingsList />
 
-                
-
-
             </main>
+
+            <style jsx>{`
+                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                .page-wrapper {
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #f8fafc 100%);
+                    padding: 40px 20px;
+                    direction: rtl;
+                    font-family: 'Tajawal', sans-serif;
+                }
+
+                /* Header Styles */
+                .page-header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                }
+
+                .header-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: white;
+                    padding: 10px 20px;
+                    border-radius: 50px;
+                    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+                    margin-bottom: 24px;
+                    font-weight: 600;
+                    color: #1F2937;
+                    font-size: 15px;
+                }
+
+                .main-heading {
+                    font-size: clamp(32px, 5vw, 52px);
+                    font-weight: 800;
+                    color: #1F2937;
+                    margin-bottom: 16px;
+                    line-height: 1.3;
+                }
+
+                .highlight {
+                    background: linear-gradient(135deg, #3B82F6, #38BDF8);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .main-subheading {
+                    font-size: 18px;
+                    color: #6B7280;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    line-height: 1.6;
+                }
+
+                .main-content {
+                    max-width: 1300px;
+                    margin: 0 auto;
+                    margin-top: 40px;
+                }
+
+                /* Profile Grid */
+                .profile-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 24px;
+                    margin-bottom: 40px;
+                }
+
+                @media (min-width: 1024px) {
+                    .profile-grid {
+                        grid-template-columns: 2fr 1fr;
+                    align-items: start;
+                    gap: 32px;
+                    margin-bottom: 40px;
+                    padding: 0;
+                    background: transparent;
+                        box-shadow: none;
+                    }
+                }
+
+                /* Profile Card */
+                .profile-card {
+                    background: white;
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                    border: 2px solid rgba(255, 255, 255, 0.8);
+                    transition: all 0.3s ease;
+                }
+
+                .profile-card:hover {
+                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+                    transform: translateY(-4px);
+                }
+
+                .profile-card-content {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    gap: 20px;
+                }
+
+                @media (min-width: 768px) {
+                    .profile-card-content {
+                        flex-direction: row;
+                        text-align: right;
+                        align-items: flex-start;
+                    }
+                }
+
+                .profile-avatar {
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 3px solid #E5E7EB;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .profile-text-wrapper {
+                    flex: 1;
+                }
+
+                .profile-name {
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #1F2937;
+                    margin-bottom: 8px;
+                }
+
+                .profile-detail {
+                    font-size: 16px;
+                    color: #6B7280;
+                    margin-bottom: 4px;
+                }
+
+                /* Personal Info Form */
+                .personal-info-section {
+                    background: white;
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                    border: 2px solid rgba(255, 255, 255, 0.8);
+                    transition: all 0.3s ease;
+                }
+
+                .personal-info-section:hover {
+                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+                }
+
+                .section-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 32px;
+                    padding-bottom: 16px;
+                    border-bottom: 2px solid #F3F4F6;
+                }
+
+                .section-title {
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #1F2937;
+                    margin: 0;
+                }
+
+                .form-row {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                    margin-bottom: 24px;
+                }
+
+                @media (min-width: 768px) {
+                    .form-row {
+                        grid-template-columns: 1fr 1fr;
+                    }
+                }
+
+                .form-group {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .form-label {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 8px;
+                }
+
+                .form-input {
+                    padding: 16px;
+                    border: 2px solid #E5E7EB;
+                    border-radius: 12px;
+                    background: #F9FAFB;
+                    font-size: 16px;
+                    font-family: 'Tajawal', sans-serif;
+                    color: #1F2937;
+                    transition: all 0.3s ease;
+                }
+
+                .form-input:focus {
+                    outline: none;
+                    border-color: #3B82F6;
+                    background: white;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+
+                .form-actions {
+                    display: flex;
+                    justify-content: flex-start;
+                    margin-top: 32px;
+                }
+
+                .save-btn {
+                    background: white;
+                    color: #3B82F6;
+                    border: 2px solid #3B82F6;
+                    padding: 16px 32px;
+                    border-radius: 16px;
+                    font-size: 18px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    font-family: 'Tajawal', sans-serif;
+                }
+
+                .save-btn:hover {
+                    background: #3B82F6;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+                }
+
+                /* Settings List */
+                .settings-list-container {
+                    background: white;
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                    border: 2px solid rgba(255, 255, 255, 0.8);
+                    transition: all 0.3s ease;
+                }
+
+                .settings-list-container:hover {
+                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+                }
+
+                .setting-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 24px;
+                    border-radius: 16px;
+                    background: #F9FAFB;
+                    border: 2px solid #E5E7EB;
+                    margin-bottom: 16px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .setting-item:last-child {
+                    margin-bottom: 0;
+                }
+
+                .setting-item:hover {
+                    border-color: #3B82F6;
+                    background: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+                }
+
+                .setting-details {
+                    flex: 1;
+                }
+
+                .setting-title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1F2937;
+                    margin-bottom: 4px;
+                }
+
+                .setting-description {
+                    font-size: 14px;
+                    color: #6B7280;
+                    line-height: 1.5;
+                }
+
+                .chevron-icon {
+                    color: #6B7280;
+                    transition: all 0.3s ease;
+                }
+
+                .setting-item:hover .chevron-icon {
+                    color: #3B82F6;
+                    transform: translateX(-4px);
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .page-wrapper {
+                        padding: 20px 16px;
+                    }
+
+                    .profile-grid {
+                        gap: 20px;
+                    }
+
+                    .personal-info-section,
+                    .profile-card,
+                    .settings-list-container {
+                        padding: 24px;
+                    }
+
+                    .section-header {
+                        margin-bottom: 24px;
+                    }
+
+                    .form-actions {
+                        justify-content: center;
+                    }
+
+                    .save-btn {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .profile-card-content {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+
+                    .form-row {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .setting-item {
+                        padding: 20px;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

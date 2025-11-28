@@ -1,8 +1,36 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Phone, Calendar, PenTool, Shield, Settings, Mail, Instagram, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import Himg from '../assets/Images/H.jpg'
-import Cimg from '../assets/Images/c.jpg'
+import { 
+  Sparkles, 
+  Droplets, 
+  Paintbrush, 
+  Hammer, 
+  Wrench, 
+  Zap,
+  Clock,
+  Search,
+  Settings,
+  Waves,
+  AlertCircle,
+  DoorOpen,
+  Armchair,
+  Wand2,
+  Palette,
+  Move,
+  ArrowLeft,
+  Check,
+  Mail, 
+  Instagram, 
+  Twitter, 
+  Facebook, 
+  Linkedin, 
+  ChevronLeft, 
+  ChevronRight, 
+  Star,
+  Phone  
+} from 'lucide-react';
+import Himg from '../assets/Images/H.jpg';
+import Cimg from '../assets/Images/c.jpg';
 
 // بيانات وهمية لنتائج البحث
 const CRAFTSMEN_DATA = [
@@ -39,14 +67,15 @@ const CRAFTSMEN_DATA = [
         status: "مميز"
     },
 ];
+
 const SERVICES_DATA = [
-    { icon: MapPin, title: "توصيل" },
-    { icon: Phone, title: "استشارة" },
-    { icon: Calendar, title: "تنظيف" },
-    { icon: PenTool, title: "تصميم" },
-    { icon: Shield, title: "تأمين" },
-    { icon: Settings, title: "صيانة" },
+    {  icon: Zap, title: "الكهرباء" , color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
+    { icon: Hammer, title: "النجارة" , color: "#eab308", bgGradient: "from-yellow-50 to-amber-50" },
+    { icon: Droplets, title: "تنظيف", color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
+    { icon: Paintbrush, title: "الدهانات", color: "#f59e0b", bgGradient: "from-amber-50 to-orange-50" },
+    { icon: Wrench, title: "السباكة" , color: "#8b5cf6", bgGradient: "from-purple-50 to-violet-50" },
 ];
+
 const testimonialClient = {
     name: "سلمى منصور",
     title: "صاحبة منزل",
@@ -54,7 +83,7 @@ const testimonialClient = {
     img: Cimg
 };
 
-const CraftsmanCard = ({ craftsman }) => {
+const CraftsmanCard = ({ craftsman, delay }) => {
     const navigate = useNavigate();
 
     const renderStars = (rating) => {
@@ -75,7 +104,7 @@ const CraftsmanCard = ({ craftsman }) => {
     };
 
     return (
-        <div className="craftsman-card">
+        <div className="craftsman-card" style={{ animationDelay: `${delay}ms` }}>
             {craftsman.status && (
                 <span className="status-tag">{craftsman.status}</span>
             )}
@@ -93,7 +122,7 @@ const CraftsmanCard = ({ craftsman }) => {
             <div className="actions">
                 <button className="btn btn-secondary">رسالة</button>
                 <button
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-profile"
                     onClick={() => navigate('/provider-profile', { state: { provider: craftsman } })}
                 >
                     ملف شخصي
@@ -102,83 +131,122 @@ const CraftsmanCard = ({ craftsman }) => {
         </div>
     );
 };
+
 // مكون قسم الخدمات
 const ServicesSection = () => (
     <section className="services-section">
-        <h2 className="section-title">الخدمات</h2>
-        <div className="services-grid">
-            {SERVICES_DATA.map((service, index) => {
-                const IconComponent = service.icon;
-                return (
-                    <div key={index} className="service-item">
-                        <div className="service-icon-wrapper">
-                            <IconComponent size={30} className="service-icon" />
+        <div className="detailed-wrapper">
+            <div className="detailed-header">
+                <h2 className="detailed-heading">خدماتنا</h2>
+                <p className="detailed-subheading">اختر من بين مجموعة واسعة من الخدمات المتاحة</p>
+            </div>
+            
+            <div className="services-grid">
+                {SERVICES_DATA.map((service, index) => {
+                    const IconComponent = service.icon;
+                    return (
+                        <div key={index} className="service-card" style={{ animationDelay: `${index * 100}ms` }}>
+                            <div className={`service-icon-bg ${service.bgGradient}`}>
+                                <IconComponent size={32} color={service.color} strokeWidth={2.5} />
+                            </div>
+                            <h3 className="service-title">{service.title}</h3>
                         </div>
-                        <p className="service-title">{service.title}</p>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
     </section>
 );
 
 const JoinUsSection = () => (
     <section className="join-us-section">
-        <div className="join-us-content">
-            <div className="join-us-text">
-                <h2 className="join-us-title">انضم إلينا الآن</h2>
-                <p className="join-us-description">انضم إلى منصتنا لزيادة وصولك للعملاء وتنمية أعمالك.</p>
+        <div className="detailed-wrapper">
+            <div className="join-us-content">
+                <div className="join-us-text">
+                    <h2 className="join-us-title">انضم إلينا الآن</h2>
+                    <p className="join-us-description">انضم إلى منصتنا لزيادة وصولك للعملاء وتنمية أعمالك.</p>
+                    
+                    <div className="steps">
+                        <div className="step-item">
+                            <span className="step-number" style={{ backgroundColor: '#06b6d4' }}>1</span>
+                            <span>تسجيل سهل وسريع</span>
+                        </div>
+                        <div className="step-item">
+                            <span className="step-number" style={{ backgroundColor: '#eab308' }}>2</span>
+                            <span>بناء ملفك الشخصي</span>
+                        </div>
+                        <div className="step-item">
+                            <span className="step-number" style={{ backgroundColor: '#8b5cf6' }}>3</span>
+                            <span>أضف خدماتك وصور أعمالك لجذب العملاء</span>
+                        </div>
+                    </div>
+                </div>
                 
-                <div className="steps">
-                    <p className="step-item"><span className="step-number step-1">1</span> تسجيل سهل وسريع</p>
-                    <p className="step-item"><span className="step-number step-2">2</span> بناء ملفك الشخصي</p>
-                    <p className="step-item"><span className="step-number step-3">3</span> أضف خدماتك وصور أعمالك لجذب العملاء</p>
+                <div className="join-us-action-card-wrapper">
+                    <div className="join-us-action-card">
+                        <button className="btn-create-account">
+                            إنشاء حساب
+                            <ArrowLeft size={20} style={{ marginRight: '8px' }} />
+                        </button>
+                    </div>
                 </div>
             </div>
-           <div className="join-us-action-card-wrapper">
-            <div className="join-us-action-card">
-                <button className="btn btn-create-account">إنشاء حساب</button>
-            </div>
-            </div>
         </div>
     </section>
 );
+
 const TestimonialsSection = () => (
-    <section className="testimonials-section" dir="rtl">
-        <h2 className="section-title testimonials-title">ثقة عملائنا</h2>
-        <div className="testimonial-content">
-            <button className="nav-arrow right-arrow"><ChevronRight size={30} /></button>
-            
-            <div className="testimonial-card">
-                <img src={testimonialClient.img} alt={testimonialClient.name} className="testimonial-avatar" />
-                <p className="quote">"{testimonialClient.quote}"</p>
-                <h4 className="client-name">{testimonialClient.name}</h4>
-                <p className="client-title">{testimonialClient.title}</p>
+    <section className="testimonials-section">
+        <div className="detailed-wrapper">
+            <div className="detailed-header">
+                <h2 className="detailed-heading">ثقة عملائنا</h2>
+                <p className="detailed-subheading">آراء عملائنا في خدماتنا</p>
             </div>
             
-            <button className="nav-arrow left-arrow"><ChevronLeft size={30} /></button>
+            <div className="testimonial-content">
+                <button className="nav-arrow">
+                    <ChevronRight size={24} />
+                </button>
+                
+                <div className="testimonial-card">
+                    <img src={testimonialClient.img} alt={testimonialClient.name} className="testimonial-avatar" />
+                    <p className="quote">"{testimonialClient.quote}"</p>
+                    <h4 className="client-name">{testimonialClient.name}</h4>
+                    <p className="client-title">{testimonialClient.title}</p>
+                </div>
+                
+                <button className="nav-arrow">
+                    <ChevronLeft size={24} />
+                </button>
+            </div>
         </div>
     </section>
 );
+
 const FinalCTASection = () => (
-    <section className="final-cta-section" dir="rtl">
+    <section className="final-cta-section">
         <div className="final-cta-container">
+            <Sparkles size={48} color="white" className="cta-sparkles" />
             <h2 className="final-cta-title">هل أنت مستعد للبدء؟</h2>
             <p className="final-cta-subtitle">انضم الآن واحصل على أفضل الخدمات أو قدم خدماتك لآلاف العملاء المحتملين.</p>
-            <button className="btn-final-cta">تسجيل مجاناً</button>
+            <button className="btn-final-cta">
+                تسجيل مجاناً
+                <ArrowLeft size={20} style={{ marginRight: '8px' }} />
+            </button>
         </div>
     </section>
 );
-const FooterSection = () => (
-    <footer className="footer-section" dir="rtl">
-        <div className="footer-content main-content-wrapper">
-            
 
+const FooterSection = () => (
+    <footer className="footer-section">
+        <div className="footer-content">
             <div className="footer-column">
-                <h3 className="column-title">خدمة</h3>
+                <div className="footer-brand">
+                    <Sparkles size={24} color="#3B82F6" />
+                    <h3 className="column-title">خدمة</h3>
+                </div>
                 <p>منصة تربط بين الحرفيين المهرة والعملاء الباحثين عن خدمات عالية الجودة.</p>
             </div>
-
 
             <div className="footer-column">
                 <h3 className="column-title">روابط سريعة</h3>
@@ -188,7 +256,6 @@ const FooterSection = () => (
                 </ul>
             </div>
 
-
             <div className="footer-column">
                 <h3 className="column-title">الدعم</h3>
                 <ul className="footer-links">
@@ -196,612 +263,725 @@ const FooterSection = () => (
                 </ul>
             </div>
 
-
             <div className="footer-column contact-column">
                 <h3 className="column-title">تواصل معنا</h3>
-                <p>info@hirafee.com</p>
-                <p>+000000</p>
+                <div className="contact-info">
+                    <p>
+                        <Mail size={16} style={{ marginLeft: '8px' }} />
+                        info@hirafee.com
+                    </p>
+                    <p>
+                        <Phone size={16} style={{ marginLeft: '8px' }} />
+                        +000000
+                    </p>
+                </div>
                 <div className="social-icons">
-                    <a href="#"><Linkedin size={24} /></a>
-                    <a href="#"><Instagram size={24} /></a>
-                    <a href="#"><Twitter size={24} /></a>
-                    <a href="#"><Facebook size={24} /></a>
+                    <a href="#"><Linkedin size={20} /></a>
+                    <a href="#"><Instagram size={20} /></a>
+                    <a href="#"><Twitter size={20} /></a>
+                    <a href="#"><Facebook size={20} /></a>
                 </div>
             </div>
-
         </div>
     </footer>
 );
+
 const HomePage = () => {
+    const navigate = useNavigate();
+
     return (
-        <div className="search-page-container" dir="rtl">
-            <style jsx="true">{`
-                /* Global/Typography */
-                .search-page-container {
+        <div className="page-wrapper" dir="rtl">
+            {/* Hero Banner Section */}
+            <section className="hero-section">
+                <div className="hero-banner">
+                    <h2>اعثر على أفضل الحرفيين بسهولة</h2>
+                    <p>استكشف خدماتنا واختر الحرفي المناسب لمنزلك أو مشروعك.</p>
+                    <button 
+                        className="btn-primary"
+                        onClick={() => navigate('/service-search')}
+                    >
+                        استعرض الحرفيين
+                    </button>
+                </div>
+            </section>
+
+            {/* Search Results */}
+            <section className="results-section">
+                <div className="detailed-wrapper">
+                    <div className="detailed-header">
+                        <h2 className="detailed-heading">أفضل الحرفيين</h2>
+                        <p className="detailed-subheading">اختر من بين الحرفيين المتميزين</p>
+                    </div>
                     
-                    background-color: #f3f5f8;
+                    <div className="craftsmen-grid">
+                        {CRAFTSMEN_DATA.map((craftsman, index) => (
+                            <CraftsmanCard 
+                                key={index} 
+                                craftsman={craftsman} 
+                                delay={index * 100}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <ServicesSection/>
+            <JoinUsSection/>
+            <TestimonialsSection />
+            <FinalCTASection />
+            <FooterSection/>
+
+            <style jsx>{`
+                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                .page-wrapper {
                     min-height: 100vh;
-                }
-                a {
-                    text-decoration: none;
-                    color: inherit;
-                }
-                .text-right {
-                    text-align: right;
+                    background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #f8fafc 100%);
+                    padding: 40px 20px;
+                    direction: rtl;
+                    font-family: 'Tajawal', sans-serif;
                 }
 
-                .btn {
-                    padding: 8px 20px;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: background-color 0.3s;
-                }
-                .btn-primary {
-                    background-color: rgba(100, 205, 221, 1); 
-                    color: #f8f8f8;
-                }
-                .btn-secondary {
-                    background-color: #ffc107; /* أصفر فاتح */
-                    color: #333;
-                }
-                .btn-primary:hover {
-                    background-color: #53a8c7ff;
-                }
-                .btn-secondary:hover {
-                    background-color: #e0a800;
-                }
-                .action-btn {
-                    padding: 10px 25px;
-                    border-radius: 6px;
-                    font-size: 14px;
-                }
-                
-                /* Hero Section (The Blue Banner) */
+                /* Hero Banner Section */
                 .hero-section {
-                    background: linear-gradient(to right, #53a8c7ff, rgba(100, 205, 221, 1)); /* تدرج أزرق */
-                    color: #f8f8f8;
-                    padding: 60px 50px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .hero-content {
-                    max-width: 1200px;
-                    width: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    text-align: right;
-                }
-                .hero-text {
-                    flex-basis: 60%;
-                }
-                .hero-text h1 {
-                    font-size: 3rem;
-                    font-weight: 800;
-                    margin: 0 0 10px 0;
-                }
-                .hero-text p {
-                    font-size: 1.1rem;
-                    color: #e0e0e0;
-                    margin-bottom: 30px;
-                }
-                .hero-image-container {
-                    flex-basis: 30%;
-                    display: flex;
-                    justify-content: flex-start; /* الصورة على اليسار في هذا القسم */
-                }
-                .hero-image {
-                    width: 200px;
-                    height: 200px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    border: 5px solid #f8f8f8;
+                    margin-bottom: 60px;
+                    margin-top: 40px;
                 }
 
-                /* Search Input */
-                .search-form {
-                    display: flex;
-                    max-width: 500px;
-                    background-color: #f8f8f8;
-                    border-radius: 8px;
+                .hero-banner {
+                    background: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
+                    border-radius: 32px;
+                    padding: 80px 48px;
+                    text-align: center;
+                    color: white;
+                    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+                    position: relative;
                     overflow: hidden;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
                 }
-                .search-input {
-                    flex-grow: 1;
-                    padding: 12px 15px;
-                    border: none;
-                    font-size: 16px;
-                    text-align: right;
+
+                .hero-banner::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
                 }
-                .search-button {
-                    background-color: #ffc107;
-                    padding: 10px 15px;
-                    border: none;
+
+                .hero-banner h2 {
+                    font-size: clamp(32px, 5vw, 48px);
+                    font-weight: 800;
+                    margin-bottom: 16px;
+                    line-height: 1.3;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .hero-banner p {
+                    font-size: 18px;
+                    margin-bottom: 32px;
+                    line-height: 1.6;
+                    color: #E0F2FE;
+                    position: relative;
+                    z-index: 1;
+                    max-width: 500px;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                .btn-primary {
+                    background: white;
+                    color: #3B82F6;
+                    border: 2px solid white;
+                    padding: 16px 40px;
+                    border-radius: 16px;
+                    font-size: 18px;
+                    font-weight: 700;
                     cursor: pointer;
-                    transition: background-color 0.3s;
+                    transition: all 0.3s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-family: 'Tajawal', sans-serif;
+                    position: relative;
+                    z-index: 1;
                 }
-                .search-button:hover {
-                    background-color: #e0a800;
+
+                .btn-primary:hover {
+                    background: transparent;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
+                    border: 2px solid white;
                 }
-                .search-button .search-icon {
-                    color: #333;
+
+                /* Detailed Wrapper */
+                .detailed-wrapper {
+                    background: white;
+                    border-radius: 32px;
+                    padding: 48px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                    margin-bottom: 40px;
                 }
-                .results-wrapper {
-                    background-color: #eaeef4ff; /* اللون الرمادي الفاتح الذي يحيط بالبطاقات */
-                   
+
+                .detailed-header {
+                    text-align: center;
+                    margin-bottom: 48px;
                 }
-                /* Search Results Section */
-                .results-section {
-                    
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 40px 50px;
-                    
+
+                .detailed-heading {
+                    font-size: clamp(28px, 4vw, 40px);
+                    font-weight: 700;
+                    color: #1F2937;
+                    margin-bottom: 12px;
                 }
+
+                .detailed-subheading {
+                    font-size: 16px;
+                    color: #6B7280;
+                }
+
+                /* Craftsmen Grid */
                 .craftsmen-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 30px;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 24px;
                 }
 
-                /* Craftsman Card Styling */
                 .craftsman-card {
-                    background-color: #eaeef4ff;
-                    padding: 20px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+                    background: #F9FAFB;
+                    border: 2px solid #E5E7EB;
+                    border-radius: 24px;
+                    padding: 32px 24px;
                     text-align: center;
                     position: relative;
+                    transition: all 0.3s ease;
+                    animation: fadeInUp 0.6s ease forwards;
+                    opacity: 0;
+                    transform: translateY(30px);
                 }
+
+                @keyframes fadeInUp {
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .craftsman-card:hover {
+                    border-color: #3B82F6;
+                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+                    transform: translateY(-4px);
+                }
+
                 .status-tag {
                     position: absolute;
-                    top: 15px;
-                    left: 15px;
-                    background-color: rgba(100, 205, 221, 1); 
-                    color: #ffffff;
-                    padding: 4px 10px;
-                    border-radius: 4px;
+                    top: 16px;
+                    left: 16px;
+                    background: linear-gradient(135deg, #3B82F6, #38BDF8);
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 20px;
                     font-size: 12px;
                     font-weight: 600;
                 }
+
                 .craftsman-image {
-                    width: 100px;
-                    height: 100px;
+                    width: 80px;
+                    height: 80px;
                     border-radius: 50%;
                     object-fit: cover;
-                    margin-bottom: 15px;
-                    border: 3px solid #f8f8f8;
+                    margin-bottom: 16px;
+                    border: 3px solid #E5E7EB;
                 }
+
                 .craftsman-name {
-                    font-size: 1.1rem;
+                    font-size: 20px;
                     font-weight: 700;
-                    color: #333;
-                    margin-bottom: 5px;
+                    color: #1F2937;
+                    margin-bottom: 8px;
                 }
+
                 .craftsman-job {
-                    font-size: 0.9rem;
-                    color: #333;
-                    margin-bottom: 10px;
+                    font-size: 14px;
+                    color: #6B7280;
+                    margin-bottom: 16px;
                 }
+
                 .rating {
                     display: flex;
-                    justify-content: center;
                     align-items: center;
-                    gap: 5px;
-                    margin-bottom: 15px;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-bottom: 20px;
                 }
+
                 .rating-value {
-                    font-weight: 600;
-                    color: #333;
-                    font-size: 0.9rem;
+                    font-weight: 700;
+                    color: #1F2937;
                 }
+
                 .star-icons {
                     display: flex;
                     gap: 2px;
                 }
+
                 .reviews-count {
-                    font-size: 0.8rem;
-                    color: #777;
+                    font-size: 14px;
+                    color: #6B7280;
                 }
+
                 .actions {
                     display: flex;
-                    gap: 10px;
-                    justify-content: center;
+                    gap: 12px;
                 }
-                .actions .btn {
-                    flex-grow: 1;
-                    padding: 8px 10px;
-                    font-size: 14px;
-                    border-radius: 6px;
+
+                .btn {
+                    flex: 1;
+                    padding: 10px 16px;
+                    border: none;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-family: 'Tajawal', sans-serif;
                 }
-                                    /* Services Section */
-                .services-section {
-                    max-width: 1200px;
-                    margin: 60px auto;
-                    padding: 0 50px;
-                    text-align: center;
-                    background-color: #f3f5f8;
+
+                .btn-primary {
+                    background: white;
+                    color: #3B82F6;
+                    border: 2px solid #3B82F6;
                 }
-                .services-section .section-title {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    color: #333;
-                    margin-bottom: 40px;
+
+                .btn-secondary {
+                    background: white;
+                    color: #3B82F6;
+                    border: 2px solid #3B82F6;
                 }
+                .btn-profile {
+                    background: #3B82F6;
+                    color: white;
+                    
+                }
+
+                .btn:hover {
+                    background: #3B82F6;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                }
+                .btn-profile:hover{
+                    background: white;
+                    color: #3B82F6;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                }
+
+                /* Services Grid */
                 .services-grid {
-                    display: flex;
-                    justify-content: space-around;
-                    flex-wrap: wrap;
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                     gap: 20px;
                 }
-                .service-item {
+
+                .service-card {
+                    background: white;
+                    border: 2px solid #F3F4F6;
+                    border-radius: 20px;
+                    padding: 32px 24px;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    animation: fadeInUp 0.6s ease forwards;
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+
+                .service-card:hover {
+                    border-color: #3B82F6;
+                    transform: translateY(-4px);
+                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+                }
+
+                .service-icon-bg {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 16px;
+                }
+
+                .service-title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1F2937;
+                }
+
+                /* Join Us Section */
+                .join-us-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 48px;
+                }
+
+                .join-us-text {
+                    flex: 1;
+                }
+
+                .join-us-title {
+                    font-size: clamp(28px, 4vw, 40px);
+                    font-weight: 700;
+                    color: #1F2937;
+                    margin-bottom: 16px;
+                }
+
+                .join-us-description {
+                    font-size: 16px;
+                    color: #6B7280;
+                    margin-bottom: 32px;
+                    line-height: 1.6;
+                }
+
+                .steps {
                     display: flex;
                     flex-direction: column;
-                    align-items: center;
-                    width: 100px; /* لتقييد عرض الأيقونة والنص */
-                    text-align: center;
+                    gap: 16px;
                 }
-                .service-icon-wrapper {
-                    background-color: #d6f0f7ff; /* أزرق فاتح جداً */
-                    border-radius: 50%;
-                    width: 65px;
-                    height: 65px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin-bottom: 10px;
-                }
-                .service-icon {
-                    color:  rgba(94, 192, 207, 1);
-                }
-                .service-title {
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    color: #333;
-                }
-                /* Join Us Section */
-                .join-us-section {
-                    background-color: #eaeef4ff; 
-                    padding: 60px 50px;
-                    margin-bottom: 60px;
-                }
-                .join-us-content {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 50px;
-                    text-align: right;
-                }
-                .join-us-text {
-                    flex-basis: 50%;
-                }
-                .join-us-title {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    color: #333;
-                    margin-bottom: 15px;
-                }
-                .join-us-description {
-                    font-size: 1rem;
-                    color: #555;
-                    margin-bottom: 30px;
-                }
-                .steps {
-                    font-size: 1rem;
-                    color: #555;
-                }
+
                 .step-item {
-                    margin-bottom: 15px;
                     display: flex;
-                    align-items: flex-start;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 16px;
+                    color: #4B5563;
                 }
+
                 .step-number {
-                    width: 25px;
-                    height: 25px;
+                    width: 32px;
+                    height: 32px;
                     border-radius: 50%;
                     display: flex;
-                    justify-content: center;
                     align-items: center;
+                    justify-content: center;
+                    color: white;
                     font-weight: 700;
-                    color: #ffffff;
                     font-size: 14px;
-                    margin-left: 10px; 
                     flex-shrink: 0;
                 }
-                .step-1 { background-color: #ffc107; } 
-                .step-2 { background-color: #ffc107; } 
-                .step-3 { background-color: #ffc107; } 
+
                 .join-us-action-card-wrapper {
-                    flex-basis: 40%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
+                    flex-shrink: 0;
                 }
+
                 .join-us-action-card {
-                    width: 250px
-                    aspect-ratio: 1 / 1;
-                    background-color: #f3f5f8;
-                    padding: 50px;
-                    border-radius: 12px;
-                    box-shadow: 0 px 20px rgba(0, 0, 0, 0.08);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .btn-create-account {
-                    background-color: rgba(100, 205, 221, 1);  
-                    color: #ffffff;
-                    padding: 12px 40px;
-                    font-size: 1rem;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                }
-                .btn-create-account:hover {
-                    background-color: rgba(100, 205, 221, 1); ;
-                }
-               /* Testimonials Section */
-                .testimonials-section {
-                    padding: 0px 20px 50px 20px;
-                    max-width: 1000px;
-                    margin: 0 auto;
+                    background: linear-gradient(135deg, #F9FAFB, #F3F4F6);
+                    border-radius: 24px;
+                    padding: 40px;
                     text-align: center;
+                    border: 2px solid rgba(255, 255, 255, 0.8);
                 }
-                .testimonials-title {
-                    color: #333;
-                    font-size: 32px;
-                    font-weight: 800;
-                    margin-bottom: 40px;
+
+                .btn-create-account {
+                    background: #3B82F6;
+                    color: white;
+                    border: 2px solid #3B82F6;
+                    padding: 16px 32px;
+                    border-radius: 16px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    font-family: 'Tajawal', sans-serif;
                 }
+
+                .btn-create-account:hover {
+                    background: white;
+                    color: #3B82F6;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+                }
+
+                /* Testimonials */
                 .testimonial-content {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 20px;
+                    gap: 24px;
                 }
+
                 .testimonial-card {
-                    background-color: #f3f5f8;;
-                    padding: 30px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                    background: #F9FAFB;
+                    border: 2px solid #E5E7EB;
+                    border-radius: 24px;
+                    padding: 40px;
+                    text-align: center;
+                    flex: 1;
                     max-width: 600px;
-                    flex-grow: 1;
-                    position: relative;
+                    transition: all 0.3s ease;
                 }
+
+                .testimonial-card:hover {
+                    border-color: #3B82F6;
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+                }
+
                 .testimonial-avatar {
                     width: 80px;
                     height: 80px;
                     border-radius: 50%;
                     object-fit: cover;
                     margin: 0 auto 20px;
-                    display: block;
+                    border: 3px solid #E5E7EB;
                 }
+
                 .quote {
                     font-style: italic;
-                    color: #555;
-                    font-size: 16px;
+                    color: #4B5563;
+                    font-size: 18px;
+                    line-height: 1.6;
                     margin-bottom: 20px;
                 }
+
                 .client-name {
                     font-weight: 700;
-                    color: #1a1a1a;
-                    margin-bottom: 5px;
+                    color: #1F2937;
+                    margin-bottom: 4px;
                 }
+
                 .client-title {
+                    color: #6B7280;
                     font-size: 14px;
-                    color: #999;
                 }
+
                 .nav-arrow {
-                    background: none;
-                    border: none;
-                    color:  rgba(100, 205, 221, 1); ;
+                    background: white;
+                    border: 2px solid #E5E7EB;
+                    color: #3B82F6;
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     cursor: pointer;
-                    padding: 10px;
-                    transition: color 0.3s;
+                    transition: all 0.3s ease;
                 }
+
                 .nav-arrow:hover {
-                    color: #53a8c7ff;
+                    border-color: #3B82F6;
+                    transform: scale(1.1);
                 }
-                
-                /* Final CTA Section */
+
+                /* Final CTA */
                 .final-cta-section {
-                    background-color: #53a8c7ff; 
-                    padding: 80px 50px;
+                    background: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
+                    border-radius: 32px;
+                    padding: 80px 48px;
                     text-align: center;
+                    margin-bottom: 40px;
                 }
+
                 .final-cta-container {
-                    max-width: 800px;
+                    max-width: 600px;
                     margin: 0 auto;
                 }
+
+                .cta-sparkles {
+                    margin-bottom: 20px;
+                }
+
                 .final-cta-title {
                     color: white;
-                    font-size: 36px;
+                    font-size: clamp(32px, 5vw, 48px);
                     font-weight: 800;
-                    margin-bottom: 10px;
+                    margin-bottom: 16px;
+                    line-height: 1.3;
                 }
+
                 .final-cta-subtitle {
-                    color: #e3f2fd;
+                    color: #E0F2FE;
                     font-size: 18px;
-                    margin-bottom: 30px;
+                    margin-bottom: 32px;
+                    line-height: 1.6;
                 }
+
                 .btn-final-cta {
-                    background-color: #ffc107; /* Yellow */
-                    color: #1a1a1a;
-                    padding: 15px 40px;
-                    border: none;
-                    border-radius: 8px;
+                    background: white;
+                    color: #3B82F6;
+                    border: 2px solid white;
+                    padding: 16px 40px;
+                    border-radius: 16px;
                     font-size: 18px;
                     font-weight: 700;
                     cursor: pointer;
-                    transition: background-color 0.3s, transform 0.1s;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    margin: 0 auto;
+                    font-family: 'Tajawal', sans-serif;
                 }
+
                 .btn-final-cta:hover {
-                    background-color: #ffda6a;
+                    background: transparent;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
                 }
-                /* Media Queries for Responsiveness */
-                @media (max-width: 992px) {
-                    .hero-content {
-                        flex-direction: column-reverse;
+
+                /* Footer */
+                .footer-section {
+                    background: white;
+                    border-radius: 32px;
+                    padding: 60px 48px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                }
+
+                .footer-content {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 40px;
+                }
+
+                .footer-brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 16px;
+                }
+
+                .column-title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #3B82F6;
+                    margin-bottom: 16px;
+                }
+
+                .footer-column p {
+                    color: #6B7280;
+                    line-height: 1.6;
+                    margin-bottom: 16px;
+                }
+
+                .footer-links {
+                    list-style: none;
+                }
+
+                .footer-links li {
+                    margin-bottom: 8px;
+                }
+
+                .footer-links a {
+                    color: #6B7280;
+                    text-decoration: none;
+                    transition: color 0.3s ease;
+                }
+
+                .footer-links a:hover {
+                    color: #3B82F6;
+                }
+
+                .contact-info p {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .social-icons {
+                    display: flex;
+                    gap: 12px;
+                    margin-top: 20px;
+                }
+
+                .social-icons a {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    background: #F3F4F6;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #3B82F6;
+                    transition: all 0.3s ease;
+                }
+
+                .social-icons a:hover {
+                    background: #3B82F6;
+                    color: white;
+                    transform: translateY(-2px);
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .page-wrapper {
+                        padding: 20px 16px;
+                    }
+
+                    .detailed-wrapper {
+                        padding: 32px 24px;
+                    }
+
+                    .hero-banner {
+                        padding: 60px 24px;
+                    }
+
+                    .join-us-content {
+                        flex-direction: column;
                         text-align: center;
                     }
-                    .hero-text, .hero-image-container {
-                        flex-basis: 100%;
+
+                    .testimonial-content {
+                        flex-direction: column;
                     }
-                    .hero-image-container {
-                        justify-content: center;
-                        margin-bottom: 30px;
-                    }
-                    .hero-text h1 {
-                        font-size: 2.5rem;
-                    }
-                    .hero-text p {
-                        font-size: 1rem;
-                    }
-                }
-                @media (max-width: 768px) {
-                    .hero-section {
-                        padding: 40px 20px;
-                    }
-                    .results-section {
-                        padding: 0 20px;
-                    }
+
                     .craftsmen-grid {
                         grid-template-columns: 1fr;
                     }
-                }
-            /* 8. Footer Section Styles */
-            .footer-section {
-                background-color: var(--background-light);
-                padding-bottom: 50px;
-            }
-            .footer-content {
-                display: flex;
-                justify-content: space-around;
-                text-align: right;
-                border-top: 1px solid #ddd;
-                padding-top: 40px;
-            }
-            .footer-column {
-                color: #666;
-            }
-            .column-title {
-                font-size: 18px;
-                font-weight: 700;
-                color: var(--primary-color);
-                margin-bottom: 15px;
-            }
-            .footer-column p, .footer-links a {
-                font-size: 14px;
-                margin-bottom: 10px;
-                display: block;
-                color: #777;
-            }
-            .footer-links {
-                list-style: none;
-                padding: 0;
-            }
-            .social-icons {
-                display: flex;
-                gap: 15px;
-                margin-top: 15px;
-            }
-            .social-icons a {
-                color: var(--primary-color);
-                transition: color 0.2s;
-            }
-            .social-icons a:hover {
-                color: var(--accent-teal);
-            }
-            
-            /* Footer Responsive */
-            @media (max-width: 768px) {
-                .footer-content {
-                    grid-template-columns: 1fr 1fr;
-                    gap: 30px;
-                }
-                .footer-column {
-                    margin-bottom: 20px;
-                }
-            }
-            @media (max-width: 500px) {
-                .footer-content {
-                    grid-template-columns: 1fr;
-                }
-                .header, .hero-content {
-                    flex-direction: column;
-                    text-align: center;
-                }
-                .nav-links {
-                    margin-top: 15px;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                }
-                .nav-links a {
-                    margin: 5px 10px;
-                }
-                .hero-image {
-                    margin-top: 30px;
-                }
-                .search-box {
-                    max-width: 100%;
-                }
-            }
 
+                    .services-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+
+                    .footer-content {
+                        grid-template-columns: 1fr;
+                        text-align: center;
+                    }
+
+                    .footer-brand {
+                        justify-content: center;
+                    }
+
+                    .final-cta-section {
+                        padding: 60px 24px;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .services-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .actions {
+                        flex-direction: column;
+                        gap: 8px;
+                        margin-top: 16px;
+                        padding-top: 16px;
+                        border-top: 1px solid #E5E7EB;
+                    }
+
+                    .btn {
+                        width: 100%;
+                    }
+                }
             `}</style>
-
-           
-            {/* Hero Section / القسم البطل */}
-            <section className="hero-section">
-                <div className="hero-content">
-                    <div className="hero-text">
-                        <h1>اعثر على الحرفي الموثوق بسهولة</h1>
-                        <p>ابحث عن أفضل الحرفيين في منطقتك بأسعار تنافسية وجودة عالية.</p>
-                        
-                        {/* Search Input */}
-                        <form className="search-form" onSubmit={(e) => e.preventDefault()}>
-                            <button className="search-button" type="submit">
-                                <Search size={24} className="search-icon" />
-                            </button>
-                            <input 
-                                type="text" 
-                                placeholder="ابحث عن كهربائي، سباك، نجار..." 
-                                className="search-input" 
-                            />
-                        </form>
-                    </div>
-                    
-                    <div className="hero-image-container">
-                        <img 
-                            src={Himg}
-                            alt="حرفي يعمل" 
-                            className="hero-image" 
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Search Results / نتائج البحث */}
-             <div className="results-wrapper">
-                <section className="results-section">
-                    <div className="craftsmen-grid">
-                        {CRAFTSMEN_DATA.map((craftsman, index) => (
-                            <CraftsmanCard key={index} craftsman={craftsman} />
-                        ))}
-                    </div>
-                </section>
-             </div>
-            <ServicesSection/>
-            <JoinUsSection/>
-            <TestimonialsSection />
-            <FinalCTASection />
-            <FooterSection/>
         </div>
     );
 };
