@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Zap, Wrench, Hammer, Paintbrush } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ServicesPage() {
   const navigate = useNavigate();
+  const { users = [] } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // بيانات أكثر واقعية للحرفيين
-  const allWorkersData = [
+  const staticWorkers = [
     {
       id: 1,
       name: "إبراهيم محمد",
@@ -99,14 +102,33 @@ export default function ServicesPage() {
   ];
 
   const categories = [
-    { key: "all", name: "الكل", icon: "🔧" },
-    { key: "electrician", name: "الكهرباء", icon: "⚡" },
-    { key: "plumber", name: "السباكة", icon: "🚰" },
-    { key: "carpenter", name: "النجارة", icon: "🪚" },
-    { key: "hvac", name: "فني تكييفات", icon: "❄️" },
-    { key: "naqash", name: "نقاشة", icon: "🎨" },
-    { key: "electronics", name: "فني إلكترونيات", icon: "🔌" }
+    { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff" },
+    { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3" },
+    { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe" },
+    { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe" },
+    { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe" },
+    { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5" },
+    { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7" }
   ];
+
+  const registeredWorkers = useMemo(() => {
+    return (users || [])
+      .filter((u) => u.role === 'worker' && u.professionKey)
+      .map((u, index) => ({
+        id: 1000 + index,
+        name: u.fullName || u.name || u.email,
+        profession: u.professionKey,
+        profession_ar: u.profession_ar || 'حرفي',
+        distance: 2.0,
+        rating: 4.6,
+        status: 'available',
+        completedJobs: 0,
+        yearsExp: 1,
+        photos: u.photos || [],
+      }));
+  }, [users]);
+
+  const allWorkersData = [...staticWorkers, ...registeredWorkers];
 
   // دالة لفتح صفحة الدفع
   const handleOrderNow = (worker) => {
@@ -215,41 +237,49 @@ export default function ServicesPage() {
         }
 
         .categories-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          justify-content: center;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 16px;
           max-width: 900px;
           margin: 0 auto;
         }
 
-        .category-btn {
-          padding: 12px 24px;
-          border-radius: 50px;
-          border: 2px solid #E5E7EB;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          color: #4B5563;
-          font-weight: 600;
-          font-size: 16px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .category-card {
+          border-radius: 20px;
+          padding: 16px 18px;
           display: flex;
           align-items: center;
-          gap: 8px;
+          justify-content: space-between;
+          cursor: pointer;
+          border: 2px solid #e5e7eb;
+          background: white;
+          transition: all 0.25s ease;
         }
 
-        .category-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
-          border-color: #3B82F6;
+        .category-card.active {
+          border-color: #3b82f6;
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
         }
 
-        .category-btn.active {
-          background: linear-gradient(135deg, #3B82F6, #38BDF8);
-          color: white;
-          border-color: transparent;
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        .category-main {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .category-icon-wrapper {
+          width: 40px;
+          height: 40px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .category-name {
+          font-weight: 600;
+          font-size: 15px;
+          color: #111827;
         }
 
         .results-section {
@@ -278,6 +308,7 @@ export default function ServicesPage() {
           border: 1px solid rgba(255, 255, 255, 0.2);
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: workerFadeIn 0.5s ease both;
         }
 
         .worker-card:hover {
@@ -293,11 +324,13 @@ export default function ServicesPage() {
           align-items: center;
           justify-content: center;
           position: relative;
+          overflow: hidden;
         }
 
         .placeholder-icon {
           font-size: 64px;
           opacity: 0.3;
+          animation: floatIcon 4s ease-in-out infinite alternate;
         }
 
         .status-badge {
@@ -319,6 +352,16 @@ export default function ServicesPage() {
         .status-busy {
           background: rgba(239, 68, 68, 0.9);
           color: white;
+        }
+
+        @keyframes floatIcon {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-6px); }
+        }
+
+        @keyframes workerFadeIn {
+          0% { opacity: 0; transform: translateY(16px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
 
         .card-body {
@@ -454,11 +497,6 @@ export default function ServicesPage() {
           .categories-grid {
             gap: 8px;
           }
-          
-          .category-btn {
-            padding: 10px 18px;
-            font-size: 14px;
-          }
         }
       `}</style>
 
@@ -483,16 +521,29 @@ export default function ServicesPage() {
 
         <section className="categories-section">
           <div className="categories-grid">
-            {categories.map(category => (
-              <button
-                key={category.key}
-                className={`category-btn ${selectedCategory === category.key ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category.key)}
-              >
-                <span>{category.icon}</span>
-                <span>{category.name}</span>
-              </button>
-            ))}
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const isActive = selectedCategory === category.key;
+              return (
+                <div
+                  key={category.key}
+                  className={`category-card ${isActive ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory(category.key)}
+                  style={{ backgroundColor: category.bg }}
+                >
+                  <div className="category-main">
+                    <div
+                      className="category-icon-wrapper"
+                      style={{ backgroundColor: '#ffffff', color: category.color }}
+                    >
+                      <Icon size={20} strokeWidth={2.5} />
+                    </div>
+                    <span className="category-name">{category.name}</span>
+                  </div>
+                  <span style={{ color: category.color }}>●</span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -519,6 +570,11 @@ export default function ServicesPage() {
                       <div className="worker-info">
                         <h3>{worker.name}</h3>
                         <p className="profession">{worker.profession_ar}</p>
+                        {worker.photos && worker.photos.length > 0 && (
+                          <p className="profession" style={{ marginTop: '4px', fontSize: '12px' }}>
+                            لديه {worker.photos.length} صور لأعماله
+                          </p>
+                        )}
                       </div>
                       <div className="rating-badge">
                         <span>⭐</span>

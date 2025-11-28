@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   Droplets, 
@@ -120,10 +120,29 @@ const CraftsmanCard = ({ craftsman, delay }) => {
             </div>
 
             <div className="actions">
-                <button className="btn btn-secondary">رسالة</button>
+                <button
+                    className="btn btn-order"
+                    onClick={() =>
+                        navigate('/payment-method', {
+                            state: {
+                                provider: {
+                                    name: craftsman.name,
+                                    profession: craftsman.job,
+                                    profession_ar: craftsman.job,
+                                    rating: craftsman.rating,
+                                    reviews: craftsman.reviews,
+                                },
+                            },
+                        })
+                    }
+                    type="button"
+                >
+                    اطلب الآن
+                </button>
                 <button
                     className="btn btn-primary btn-profile"
                     onClick={() => navigate('/provider-profile', { state: { provider: craftsman } })}
+                    type="button"
                 >
                     ملف شخصي
                 </button>
@@ -158,7 +177,7 @@ const ServicesSection = () => (
     </section>
 );
 
-const JoinUsSection = () => (
+const JoinUsSection = ({ onRegister }) => (
     <section className="join-us-section">
         <div className="detailed-wrapper">
             <div className="join-us-content">
@@ -184,7 +203,7 @@ const JoinUsSection = () => (
                 
                 <div className="join-us-action-card-wrapper">
                     <div className="join-us-action-card">
-                        <button className="btn-create-account">
+                        <button className="btn-create-account" type="button" onClick={onRegister}>
                             إنشاء حساب
                             <ArrowLeft size={20} style={{ marginRight: '8px' }} />
                         </button>
@@ -223,13 +242,13 @@ const TestimonialsSection = () => (
     </section>
 );
 
-const FinalCTASection = () => (
+const FinalCTASection = ({ onRegister }) => (
     <section className="final-cta-section">
         <div className="final-cta-container">
             <Sparkles size={48} color="white" className="cta-sparkles" />
             <h2 className="final-cta-title">هل أنت مستعد للبدء؟</h2>
             <p className="final-cta-subtitle">انضم الآن واحصل على أفضل الخدمات أو قدم خدماتك لآلاف العملاء المحتملين.</p>
-            <button className="btn-final-cta">
+            <button className="btn-final-cta" type="button" onClick={onRegister}>
                 تسجيل مجاناً
                 <ArrowLeft size={20} style={{ marginRight: '8px' }} />
             </button>
@@ -251,15 +270,15 @@ const FooterSection = () => (
             <div className="footer-column">
                 <h3 className="column-title">روابط سريعة</h3>
                 <ul className="footer-links">
-                    <li><a href="#">خدماتنا</a></li>
-                    <li><a href="#">كيف نعمل</a></li>
+                    <li><Link to="/service-categories">خدماتنا</Link></li>
+                    <li><Link to="/about">كيف نعمل</Link></li>
                 </ul>
             </div>
 
             <div className="footer-column">
                 <h3 className="column-title">الدعم</h3>
                 <ul className="footer-links">
-                    <li><a href="#">اتصل بنا</a></li>
+                    <li><Link to="/contact-us">اتصل بنا</Link></li>
                 </ul>
             </div>
 
@@ -276,10 +295,18 @@ const FooterSection = () => (
                     </p>
                 </div>
                 <div className="social-icons">
-                    <a href="#"><Linkedin size={20} /></a>
-                    <a href="#"><Instagram size={20} /></a>
-                    <a href="#"><Twitter size={20} /></a>
-                    <a href="#"><Facebook size={20} /></a>
+                    <Link to="/about" aria-label="لينكدإن">
+                        <Linkedin size={20} />
+                    </Link>
+                    <Link to="/service-categories" aria-label="إنستغرام">
+                        <Instagram size={20} />
+                    </Link>
+                    <Link to="/service-search" aria-label="تويتر">
+                        <Twitter size={20} />
+                    </Link>
+                    <Link to="/contact-us" aria-label="فيسبوك">
+                        <Facebook size={20} />
+                    </Link>
                 </div>
             </div>
         </div>
@@ -288,6 +315,7 @@ const FooterSection = () => (
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const goToRegister = () => navigate('/register');
 
     return (
         <div className="page-wrapper" dir="rtl">
@@ -326,9 +354,9 @@ const HomePage = () => {
             </section>
 
             <ServicesSection/>
-            <JoinUsSection/>
+            <JoinUsSection onRegister={goToRegister}/>
             <TestimonialsSection />
-            <FinalCTASection />
+            <FinalCTASection onRegister={goToRegister} />
             <FooterSection/>
 
             <style jsx>{`
@@ -363,6 +391,7 @@ const HomePage = () => {
                     box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
                     position: relative;
                     overflow: hidden;
+                    animation: heroFloat 6s ease-in-out infinite alternate;
                 }
 
                 .hero-banner::before {
@@ -373,6 +402,11 @@ const HomePage = () => {
                     right: 0;
                     bottom: 0;
                     background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                }
+
+                @keyframes heroFloat {
+                    0% { transform: translateY(0px); }
+                    100% { transform: translateY(-8px); }
                 }
 
                 .hero-banner h2 {
@@ -560,15 +594,43 @@ const HomePage = () => {
                     border: 2px solid #3B82F6;
                 }
 
+                .btn-order {
+                    flex: 1;
+                    padding: 10px 16px;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    border: 2px solid #3B82F6;
+                    background: #3B82F6;
+                    color: #ffffff;
+                    transition: all 0.3s ease;
+                    font-family: 'Tajawal', sans-serif;
+                }
+
+                .btn-order:hover {
+                    background: #ffffff;
+                    color: #3B82F6;
+                    border-color: #3B82F6;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+                }
+
                 .btn-secondary {
                     background: white;
                     color: #3B82F6;
                     border: 2px solid #3B82F6;
                 }
+
                 .btn-profile {
-                    background: #3B82F6;
-                    color: white;
-                    
+                    background: transparent;
+                    color: #1F2937; /* dark gray for elegance */
+                    font-weight: 600;
+                    border: 1.8px solid transparent;
+                    padding: 8px 14px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.25s ease;
+                    font-family: 'Tajawal', sans-serif;
                 }
 
                 .btn:hover {
@@ -577,11 +639,12 @@ const HomePage = () => {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
                 }
-                .btn-profile:hover{
-                    background: white;
+
+               .btn-profile:hover {
+                    border-color: #3B82F6;
                     color: #3B82F6;
+                    background: rgba(59, 130, 246, 0.06);
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
                 }
 
                 /* Services Grid */

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -9,13 +10,25 @@ export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  const handleLogin = () => {
-    setIsLoading(true);
-    setTimeout(() => {
+  const handleLogin = async () => {
+    setError('');
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setError('الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await login(loginEmail, loginPassword, { rememberMe });
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'حدث خطأ غير متوقع، حاول مرة أخرى');
+    } finally {
       setIsLoading(false);
-      alert('تم تسجيل الدخول بنجاح!');
-    }, 1500);
+    }
   };
 
   const goToRegister = () => {
@@ -41,11 +54,11 @@ export default function LoginPage() {
 
         .page-container {
           min-height: 100vh;
-          background: linear-gradient(135deg, #56a3c7 0%, #4db8d8 100%);
+          background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #f8fafc 100%);
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 20px;
+          padding: 40px 20px;
           position: relative;
           overflow: hidden;
         }
@@ -53,35 +66,15 @@ export default function LoginPage() {
         .page-container::before {
           content: '';
           position: absolute;
-          width: 400px;
-          height: 400px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 50%;
-          top: -100px;
-          right: -100px;
-          animation: float 6s ease-in-out infinite;
-        }
-
-        .page-container::after {
-          content: '';
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 50%;
-          bottom: -80px;
-          left: -80px;
-          animation: float 8s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(20px); }
+          inset: 0;
+          background-image: radial-gradient(circle at top left, rgba(59,130,246,0.15), transparent 55%),
+                            radial-gradient(circle at bottom right, rgba(56,189,248,0.2), transparent 55%);
+          opacity: 0.9;
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.96);
+          backdrop-filter: blur(16px);
           width: 100%;
           max-width: 480px;
           padding: 50px 45px;
@@ -125,7 +118,7 @@ export default function LoginPage() {
         }
 
         .create-link {
-          color: #4db8d8;
+          color: #3B82F6;
           text-decoration: none;
           font-weight: 600;
           transition: all 0.3s ease;
@@ -133,7 +126,7 @@ export default function LoginPage() {
         }
 
         .create-link:hover {
-          color: #56a3c7;
+          color: #1D4ED8;
           text-decoration: underline;
         }
 
@@ -178,9 +171,9 @@ export default function LoginPage() {
 
         .input:focus {
           outline: none;
-          border-color: #4db8d8;
+          border-color: #3B82F6;
           background: white;
-          box-shadow: 0 0 0 4px rgba(77, 184, 216, 0.15);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
         .input::placeholder {
@@ -201,7 +194,7 @@ export default function LoginPage() {
         }
 
         .password-toggle:hover {
-          color: #4db8d8;
+          color: #3B82F6;
         }
 
         .options-row {
@@ -224,11 +217,11 @@ export default function LoginPage() {
           width: 18px;
           height: 18px;
           cursor: pointer;
-          accent-color: #4db8d8;
+          accent-color: #3B82F6;
         }
 
         .forgot {
-          color: #4db8d8;
+          color: #3B82F6;
           font-size: 14px;
           text-decoration: none;
           font-weight: 600;
@@ -236,14 +229,14 @@ export default function LoginPage() {
         }
 
         .forgot:hover {
-          color: #56a3c7;
+          color: #1D4ED8;
           text-decoration: underline;
         }
 
         .primary-btn {
           width: 100%;
           padding: 16px;
-          background: linear-gradient(135deg, #56a3c7 0%, #4db8d8 100%);
+          background: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
           color: white;
           border: none;
           border-radius: 12px;
@@ -257,7 +250,7 @@ export default function LoginPage() {
 
         .primary-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 12px 28px rgba(77, 184, 216, 0.4);
+          box-shadow: 0 12px 28px rgba(59, 130, 246, 0.4);
         }
 
         .primary-btn:active {
@@ -340,6 +333,16 @@ export default function LoginPage() {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
+        .error-banner {
+          margin-bottom: 20px;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: rgba(239, 68, 68, 0.1);
+          color: #b91c1c;
+          font-weight: 600;
+          text-align: center;
+        }
+
         .social-btn.facebook {
           color: #1877f2;
         }
@@ -371,6 +374,8 @@ export default function LoginPage() {
               ليس لديك حساب؟ <span className="create-link" onClick={goToRegister}>إنشاء حساب جديد</span>
             </p>
           </div>
+
+          {error && <div className="error-banner">{error}</div>}
 
           <div>
             <div className="form-group">
@@ -418,7 +423,7 @@ export default function LoginPage() {
                 />
                 <span>تذكرني</span>
               </label>
-              <a href="#" className="forgot">نسيت كلمة المرور؟</a>
+              <Link to="/contact-us" className="forgot">نسيت كلمة المرور؟</Link>
             </div>
 
             <button className="primary-btn" onClick={handleLogin} disabled={isLoading}>

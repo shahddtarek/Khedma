@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import KhidmahLogo from '../assets/Images/Logo.jpg';
 
 export default function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +20,15 @@ export default function NavBar() {
 
   const isActive = (path) => {
     return location.pathname === path;
+  };
+
+  const handleProfileClick = () => {
+    if (!user) return;
+    if (user.role === 'worker') {
+      navigate('/worker-dashboard');
+    } else {
+      navigate('/client-dashboard');
+    }
   };
 
   return (
@@ -59,7 +71,7 @@ export default function NavBar() {
         .navbar-right {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
         }
 
         .logo-link {
@@ -68,6 +80,27 @@ export default function NavBar() {
           text-decoration: none;
           transition: transform 0.3s ease;
           position: relative;
+        }
+
+        .profile-icon-button {
+          width: 40px;
+          height: 40px;
+          border-radius: 999px;
+          border: 2px solid #3b82f6;
+          background: #eff6ff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #1d4ed8;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          font-weight: 700;
+        }
+
+        .profile-icon-button:hover {
+          background: #dbeafe;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
         }
 
         .logo-link:hover {
@@ -274,12 +307,30 @@ export default function NavBar() {
           </div>
         </div>
         <div className="navbar-right">
-          <Link to="/login" className="nav-button nav-button-secondary">
-            تسجيل الدخول
-          </Link>
-          <Link to="/register" className="nav-button nav-button-primary">
-            <span>إنشاء حساب</span>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <button
+                type="button"
+                className="profile-icon-button"
+                onClick={handleProfileClick}
+                aria-label="الملف الشخصي"
+              >
+                {(user?.fullName || user?.email || 'U').charAt(0)}
+              </button>
+              <button type="button" className="nav-button nav-button-secondary" onClick={logout}>
+                تسجيل الخروج
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-button nav-button-secondary">
+                تسجيل الدخول
+              </Link>
+              <Link to="/register" className="nav-button nav-button-primary">
+                <span>إنشاء حساب</span>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </>

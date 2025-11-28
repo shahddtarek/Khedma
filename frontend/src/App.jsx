@@ -14,6 +14,8 @@ import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import ServiceSearch from "./pages/service-search";
 import PaymentMethod from "./pages/payment-method";
+import WorkerDashboard from "./pages/worker-dashboard";
+import ClientDashboard from "./pages/client-dashboard";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/service-search" element={<ServiceSearch />} />
           <Route path="/payment-method" element={<PaymentMethod />} />
+          <Route path="/worker-dashboard" element={<WorkerDashboard />} />
+          <Route path="/client-dashboard" element={<ClientDashboard />} />
         </Routes>
       </div>
     </Router>

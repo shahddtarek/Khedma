@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Lock, Phone, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const WORKER_SPECIALTIES = [
+  { key: 'electrician', label: 'كهربائي' },
+  { key: 'plumber', label: 'سباك' },
+  { key: 'carpenter', label: 'نجار' },
+  { key: 'painting', label: 'دهانات' },
+  { key: 'other', label: 'خدمة أخرى' },
+];
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -10,31 +19,109 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [role, setRole] = useState('user'); // 'worker' | 'user'
+  const [specialtyKey, setSpecialtyKey] = useState('electrician');
+  const [workPhotos, setWorkPhotos] = useState([]);
+  const [error, setError] = useState('');
+  const { register: registerUser } = useAuth();
 
-  const handleNextStep = () => {
+  const validateStep = () => {
+    if (step === 1) {
+      if (!fullName.trim() || !signupEmail.trim()) {
+        setError('الرجاء إدخال الاسم الكامل والبريد الإلكتروني');
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (!signupPassword.trim() || !phoneNumber.trim()) {
+        setError('الرجاء إدخال كلمة المرور ورقم الهاتف');
+        return false;
+      }
+      if (!confirmPassword.trim() || confirmPassword.trim() !== signupPassword.trim()) {
+        setError('تأكيد كلمة المرور غير مطابق');
+        return false;
+      }
+    }
+    if (step === 3) {
+      if (!city.trim() || !address.trim()) {
+        setError('الرجاء إدخال المدينة والعنوان');
+        return false;
+      }
+      if (role === 'worker' && !specialtyKey) {
+        setError('الرجاء اختيار نوع الخدمة التي تقدمها');
+        return false;
+      }
+    }
+    setError('');
+    return true;
+  };
+
+  const handleNextStep = async () => {
+    if (!validateStep()) return;
+
     if (step < 3) {
       setStep(step + 1);
-    } else {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        alert('تم إنشاء الحساب بنجاح!');
-        goToLogin();
-      }, 1500);
+      return;
     }
+
+    await handleSubmit();
   };
 
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
     }
+    setError('');
   };
 
   const goToLogin = () => {
     navigate('/login');
+  };
+
+  const handlePhotosChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    const limited = files.slice(0, 5);
+    const mapped = limited.map((file) => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      preview: URL.createObjectURL(file),
+    }));
+    setWorkPhotos(mapped);
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    try {
+      const selectedSpecialty = WORKER_SPECIALTIES.find((s) => s.key === specialtyKey);
+
+      await registerUser({
+        fullName: fullName.trim(),
+        email: signupEmail.trim(),
+        password: signupPassword.trim(),
+        phoneNumber: phoneNumber.trim(),
+        city: city.trim(),
+        address: address.trim(),
+        role,
+        professionKey: role === 'worker' ? specialtyKey : null,
+        profession_ar: role === 'worker' ? selectedSpecialty?.label || null : null,
+        photos: role === 'worker' ? workPhotos : [],
+      });
+
+      if (role === 'worker') {
+        navigate('/service-search');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.message || 'حدث خطأ أثناء إنشاء الحساب');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,11 +143,11 @@ export default function RegisterPage() {
 
         .page-container {
           min-height: 100vh;
-          background: linear-gradient(135deg, #56a3c7 0%, #4db8d8 100%);
+          background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #f8fafc 100%);
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 20px;
+          padding: 40px 20px;
           position: relative;
           overflow: hidden;
         }
@@ -68,35 +155,15 @@ export default function RegisterPage() {
         .page-container::before {
           content: '';
           position: absolute;
-          width: 400px;
-          height: 400px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 50%;
-          top: -100px;
-          right: -100px;
-          animation: float 6s ease-in-out infinite;
-        }
-
-        .page-container::after {
-          content: '';
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 50%;
-          bottom: -80px;
-          left: -80px;
-          animation: float 8s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(20px); }
+          inset: 0;
+          background-image: radial-gradient(circle at top left, rgba(59,130,246,0.15), transparent 55%),
+                            radial-gradient(circle at bottom right, rgba(56,189,248,0.2), transparent 55%);
+          opacity: 0.9;
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.96);
+          backdrop-filter: blur(16px);
           width: 100%;
           max-width: 480px;
           padding: 50px 45px;
@@ -123,7 +190,7 @@ export default function RegisterPage() {
         }
 
         .step-indicator {
-          color: #4db8d8;
+          color: #3B82F6;
           font-weight: 600;
           font-size: 14px;
           text-align: right;
@@ -140,7 +207,7 @@ export default function RegisterPage() {
 
         .progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #56a3c7 0%, #4db8d8 100%);
+          background: linear-gradient(90deg, #3B82F6 0%, #38BDF8 100%);
           border-radius: 10px;
           transition: width 0.4s ease;
         }
@@ -166,7 +233,7 @@ export default function RegisterPage() {
         }
 
         .login-link {
-          color: #4db8d8;
+          color: #3B82F6;
           text-decoration: none;
           font-weight: 600;
           transition: all 0.3s ease;
@@ -174,7 +241,7 @@ export default function RegisterPage() {
         }
 
         .login-link:hover {
-          color: #56a3c7;
+          color: #1D4ED8;
           text-decoration: underline;
         }
 
@@ -219,9 +286,9 @@ export default function RegisterPage() {
 
         .input:focus {
           outline: none;
-          border-color: #4db8d8;
+          border-color: #3B82F6;
           background: white;
-          box-shadow: 0 0 0 4px rgba(77, 184, 216, 0.15);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
         .input::placeholder {
@@ -242,13 +309,13 @@ export default function RegisterPage() {
         }
 
         .password-toggle:hover {
-          color: #4db8d8;
+          color: #3B82F6;
         }
 
         .primary-btn {
           width: 100%;
           padding: 16px;
-          background: linear-gradient(135deg, #56a3c7 0%, #4db8d8 100%);
+          background: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
           color: white;
           border: none;
           border-radius: 12px;
@@ -262,7 +329,7 @@ export default function RegisterPage() {
 
         .primary-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 12px 28px rgba(77, 184, 216, 0.4);
+          box-shadow: 0 12px 28px rgba(59, 130, 246, 0.4);
         }
 
         .primary-btn:active {
@@ -278,8 +345,8 @@ export default function RegisterPage() {
           width: 100%;
           padding: 16px;
           background: white;
-          color: #4db8d8;
-          border: 2px solid #4db8d8;
+          color: #3B82F6;
+          border: 2px solid #3B82F6;
           border-radius: 12px;
           font-size: 17px;
           font-weight: 700;
@@ -289,9 +356,19 @@ export default function RegisterPage() {
         }
 
         .secondary-btn:hover {
-          background: #f7fafc;
+          background: #EFF6FF;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(77, 184, 216, 0.2);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .error-banner {
+          margin-bottom: 20px;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: rgba(239, 68, 68, 0.1);
+          color: #b91c1c;
+          font-weight: 600;
+          text-align: center;
         }
 
         .btn-content {
@@ -318,6 +395,66 @@ export default function RegisterPage() {
           display: flex;
           gap: 15px;
           margin-top: 25px;
+        }
+
+        .role-toggle {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+
+        .role-option {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 999px;
+          border: 2px solid #e2e8f0;
+          background: #f7fafc;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-align: center;
+        }
+
+        .role-option.active {
+          border-color: #4db8d8;
+          background: #e0f2fe;
+          color: #0f172a;
+          box-shadow: 0 4px 12px rgba(77, 184, 216, 0.3);
+        }
+
+        .helper-text {
+          font-size: 13px;
+          color: #718096;
+          margin-top: 4px;
+        }
+
+        .specialty-select {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 12px;
+          border: 2px solid #e2e8f0;
+          background: #f7fafc;
+          font-family: "Tajawal", sans-serif;
+          font-size: 14px;
+        }
+
+        .specialty-select:focus {
+          outline: none;
+          border-color: #4db8d8;
+          background: white;
+          box-shadow: 0 0 0 4px rgba(77, 184, 216, 0.15);
+        }
+
+        .photos-input {
+          font-size: 13px;
+          color: #4a5568;
+        }
+
+        .photos-hint {
+          font-size: 12px;
+          color: #a0aec0;
+          margin-top: 4px;
         }
 
         @media (max-width: 640px) {
@@ -351,8 +488,33 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          {error && <div className="error-banner">{error}</div>}
+
           {step === 1 && (
             <div>
+              <div className="form-group">
+                <label className="form-label">نوع الحساب</label>
+                <div className="role-toggle">
+                  <button
+                    type="button"
+                    className={`role-option ${role === 'user' ? 'active' : ''}`}
+                    onClick={() => setRole('user')}
+                  >
+                    مستخدم
+                  </button>
+                  <button
+                    type="button"
+                    className={`role-option ${role === 'worker' ? 'active' : ''}`}
+                    onClick={() => setRole('worker')}
+                  >
+                    عامل
+                  </button>
+                </div>
+                <p className="helper-text">
+                  اختر إذا كنت تبحث عن خدمة (مستخدم) أو تقدم خدمة (عامل).
+                </p>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">الاسم الكامل</label>
                 <div className="input-wrapper">
@@ -410,6 +572,20 @@ export default function RegisterPage() {
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">تأكيد كلمة المرور</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={20} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="input"
+                    placeholder="أعد إدخال كلمة المرور"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -473,6 +649,39 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
+
+              {role === 'worker' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">نوع الخدمة التي تقدمها</label>
+                    <select
+                      className="specialty-select"
+                      value={specialtyKey}
+                      onChange={(e) => setSpecialtyKey(e.target.value)}
+                    >
+                      {WORKER_SPECIALTIES.map((spec) => (
+                        <option key={spec.key} value={spec.key}>
+                          {spec.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">صور من أعمالك (اختياري)</label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handlePhotosChange}
+                      className="photos-input"
+                    />
+                    <p className="photos-hint">
+                      يمكنك رفع حتى 5 صور لعرض نماذج من أعمالك للعملاء.
+                    </p>
+                  </div>
+                </>
+              )}
 
               <div className="button-group">
                 <button className="secondary-btn" onClick={handlePrevStep}>

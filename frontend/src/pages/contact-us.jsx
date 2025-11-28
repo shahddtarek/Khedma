@@ -467,21 +467,21 @@ const ContactUs = () => {
               <div className="social-card glass-effect card-hover">
                 <h3 className="social-title gradient-text">تابعنا</h3>
                 <div className="social-icons">
-                  <a href="#">
+                  <a href="https://www.facebook.com" target="_blank" rel="noreferrer">
                     <img 
                       className="social-icon" 
                       src="https://cdn-icons-png.flaticon.com/512/733/733547.png" 
                       alt="facebook" 
                     />
                   </a>
-                  <a href="#">
+                  <a href="https://www.twitter.com" target="_blank" rel="noreferrer">
                     <img 
                       className="social-icon" 
                       src="https://cdn-icons-png.flaticon.com/512/733/733579.png" 
                       alt="twitter" 
                     />
                   </a>
-                  <a href="#">
+                  <a href="https://www.instagram.com" target="_blank" rel="noreferrer">
                     <img 
                       className="social-icon" 
                       src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" 
