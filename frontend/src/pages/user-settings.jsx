@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Heart, Activity, Sparkles, ArrowLeft } from 'lucide-react';
 import meImage from '../assets/Images/electrical.webp';
+import { useAuth } from '../context/AuthContext.jsx';
 
-const initialFormData = {
-    email: 'ali@example.com',
-    name: 'علي محمد',
-    address: 'شارع الملك فيصل، الجيزة 1234',
-    phone: '+201053673354',
-    city: 'الجيزة',
-    job: 'كهربائي',
-    image: meImage
+const fallbackUser = {
+  email: 'user@example.com',
+  name: 'مستخدم جديد',
+  address: '—',
+  phone: '—',
+  city: '—',
+  job: '',
+  image: meImage,
 };
 
 const settingsItems = [
@@ -38,21 +39,30 @@ const ProfileCard = ({ user }) => (
   <div className="profile-card">
     <div className="profile-card-content">
       <img 
-        src={user.image || "#"} 
-        alt={`صورة ${user.name}`} 
+        src={user.image || meImage} 
+        alt={`صورة ${user.name || 'المستخدم'}`} 
         className="profile-avatar"
       />
       <div className="profile-text-wrapper">
         <h3 className="profile-name">{user.name}</h3>
-        <p className="profile-detail">{user.job || "الوظيفة غير محددة"}</p>
-        <p className="profile-detail">{user.city}</p>
+        <p className="profile-detail">الدور: {user.role === 'worker' ? 'عامل' : 'مستخدم'}</p>
+        {user.role === 'worker' && (
+          <p className="profile-detail">
+            التخصص: {user.profession_ar || 'غير محدد'}
+          </p>
+        )}
+        <p className="profile-detail">المدينة: {user.city || 'غير محددة'}</p>
       </div>
     </div>
   </div>
 );
 
-const PersonalInfoForm = () => {
-    const [formData, setFormData] = useState(initialFormData);
+const PersonalInfoForm = ({ user, onSave }) => {
+    const [formData, setFormData] = useState(user || fallbackUser);
+
+    useEffect(() => {
+      setFormData(user || fallbackUser);
+    }, [user]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -60,7 +70,7 @@ const PersonalInfoForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Saving changes:', formData);
+        onSave?.(formData);
     };
 
     return (
@@ -151,6 +161,31 @@ const AccountSettingsList = () => (
 );
 
 const UserSettingsPage = () => {
+    const { user, updateUser } = useAuth();
+    const mergedUser = user
+      ? {
+          name: user.fullName || user.name || fallbackUser.name,
+          email: user.email || fallbackUser.email,
+          address: user.address || fallbackUser.address,
+          phone: user.phoneNumber || user.phone || fallbackUser.phone,
+          city: user.city || fallbackUser.city,
+          job: user.profession_ar || fallbackUser.job,
+          image: user.image || fallbackUser.image,
+          role: user.role || 'user',
+          profession_ar: user.profession_ar || null,
+        }
+      : fallbackUser;
+
+    const handleSave = (data) => {
+      updateUser?.({
+        fullName: data.name,
+        email: data.email,
+        city: data.city,
+        address: data.address,
+        phoneNumber: data.phone,
+      });
+    };
+
     return (
         <div className="page-wrapper" dir="rtl">
             <main className="main-content">
@@ -165,10 +200,10 @@ const UserSettingsPage = () => {
 
                 <div className="profile-grid">
                     <div className="form-column">
-                        <PersonalInfoForm />
+                        <PersonalInfoForm user={mergedUser} onSave={handleSave} />
                     </div>
                     <div className="card-column">
-                        <ProfileCard user={initialFormData}/>
+                        <ProfileCard user={mergedUser} />
                     </div>
                 </div>
 
