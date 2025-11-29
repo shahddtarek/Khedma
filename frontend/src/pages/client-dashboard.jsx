@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Heart, MapPin, Wallet, Bell, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { CalendarDays, Heart, MapPin, Wallet, Bell, CheckCircle2, XCircle, Clock, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
 
@@ -8,6 +8,9 @@ export default function ClientDashboard() {
   const displayName = user?.fullName || user?.name || 'عميل خدمة';
   const [jobs, setJobs] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [authoredRatings, setAuthoredRatings] = useState({});
+  const [ratingDrafts, setRatingDrafts] = useState({});
+  const [submittingJobId, setSubmittingJobId] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -19,6 +22,18 @@ export default function ClientDashboard() {
     if (!user?.id) return;
     setJobs(dataService.getJobsForClient(user.id));
     setUnreadCount(dataService.getUnreadNotificationCount(user.id));
+    const ownRatings = dataService.getRatingsAuthoredByUser(user.id);
+    const mapped = ownRatings.reduce((acc, rating) => {
+      acc[rating.jobId] = rating;
+      return acc;
+    }, {});
+    setAuthoredRatings(mapped);
+  };
+
+  const handleNotificationClick = () => {
+    if (!user?.id || unreadCount === 0) return;
+    dataService.markAllNotificationsAsRead(user.id);
+    setUnreadCount(0);
   };
 
   const pendingJobs = jobs.filter((job) => job.status === 'pending');
@@ -27,6 +42,90 @@ export default function ClientDashboard() {
   const completedJobs = jobs.filter((job) => job.status === 'completed');
   const totalSpending = (acceptedJobs.length + completedJobs.length) * 250;
   const nextAppointment = acceptedJobs[0];
+
+  const handleDraftChange = (jobId, field, value) => {
+    setRatingDrafts((prev) => ({
+      ...prev,
+      [jobId]: {
+        ...prev[jobId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleRatingSubmit = (job) => {
+    const draft = ratingDrafts[job.id];
+    if (!draft?.score) {
+      alert('اختر تقييم من 1 إلى 5 نجوم');
+      return;
+    }
+    setSubmittingJobId(job.id);
+    try {
+      dataService.addRating({
+        jobId: job.id,
+        fromUserId: user.id,
+        toUserId: job.workerId,
+        score: Number(draft.score),
+        comment: draft.comment || '',
+        fromRole: 'client',
+      });
+      refreshDashboard();
+      setRatingDrafts((prev) => ({
+        ...prev,
+        [job.id]: { score: '', comment: '' },
+      }));
+    } catch (error) {
+      alert(error.message || 'حدث خطأ أثناء إرسال التقييم');
+    } finally {
+      setSubmittingJobId(null);
+    }
+  };
+
+  const renderRatingForm = (job) => {
+    const canRate = (job.status === 'accepted' || job.status === 'completed') && !authoredRatings[job.id];
+    if (!canRate) {
+      const existing = authoredRatings[job.id];
+      if (!existing) return null;
+      return (
+        <div className="rating-status">
+          <span>⭐ {existing.score}</span>
+          <span>تم إرسال تقييمك</span>
+        </div>
+      );
+    }
+
+    const draft = ratingDrafts[job.id] || { score: '', comment: '' };
+    return (
+      <div className="rating-form">
+        <div className="rating-stars">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`star-button ${Number(draft.score) >= value ? 'active' : ''}`}
+              onClick={() => handleDraftChange(job.id, 'score', value)}
+            >
+              <Star size={16} />
+            </button>
+          ))}
+        </div>
+        <textarea
+          className="rating-textarea"
+          rows={2}
+          placeholder="اترك تعليقك للمزود..."
+          value={draft.comment || ''}
+          onChange={(e) => handleDraftChange(job.id, 'comment', e.target.value)}
+        />
+        <button
+          className="rating-submit"
+          onClick={() => handleRatingSubmit(job)}
+          disabled={submittingJobId === job.id}
+        >
+          {submittingJobId === job.id ? 'جاري الإرسال...' : 'إرسال التقييم'}
+        </button>
+      </div>
+    );
+  };
 
   const renderStatusChip = (job) => {
     if (job.status === 'accepted') {
@@ -117,6 +216,14 @@ export default function ClientDashboard() {
           color: #ffffff;
           font-weight: 800;
           font-size: 18px;
+          overflow: hidden;
+          border: 2px solid #e0e7ff;
+        }
+
+        .avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .profile-text {
@@ -239,6 +346,8 @@ export default function ClientDashboard() {
           border-radius: 50%;
           background: #eff6ff;
           color: #1d4ed8;
+          border: none;
+          cursor: pointer;
         }
 
         .notification-count {
@@ -316,6 +425,89 @@ export default function ClientDashboard() {
           color: #1e40af;
         }
 
+        .rating-form {
+          margin-top: 10px;
+          padding: 12px;
+          border: 1px solid #e0e7ff;
+          border-radius: 12px;
+          background: #ffffff;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+          animation: fadeInUp 0.4s ease;
+        }
+
+        .rating-stars {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+
+        .star-button {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #e2e8f0;
+          color: #fbbf24;
+          cursor: pointer;
+          transition: transform 0.2s, background 0.2s;
+        }
+
+        .star-button.active {
+          background: #fde68a;
+          transform: translateY(-2px);
+        }
+
+        .rating-textarea {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 8px 10px;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 13px;
+          resize: vertical;
+          margin-bottom: 10px;
+        }
+
+        .rating-submit {
+          width: 100%;
+          padding: 10px;
+          border: none;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #3b82f6, #38bdf8);
+          color: white;
+          font-weight: 700;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+
+        .rating-submit:disabled {
+          opacity: 0.7;
+          cursor: progress;
+        }
+
+        .rating-status {
+          margin-top: 10px;
+          padding: 10px;
+          border-radius: 10px;
+          background: #ecfccb;
+          color: #166534;
+          display: flex;
+          justify-content: space-between;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .next-appointment {
           background: #f0f9ff;
           border: 2px solid #3b82f6;
@@ -354,7 +546,11 @@ export default function ClientDashboard() {
         <aside className="sidebar">
           <div className="profile-header">
             <div className="avatar">
-              {displayName.charAt(0)}
+              {user?.profilePhoto ? (
+                <img src={user.profilePhoto} alt="صورة العميل" />
+              ) : (
+                displayName.charAt(0)
+              )}
             </div>
             <div className="profile-text">
               <span className="profile-name">{displayName}</span>
@@ -380,10 +576,10 @@ export default function ClientDashboard() {
 
           <div className="nav-footer">
             {unreadCount > 0 ? (
-              <div className="notification-badge">
+              <button type="button" className="notification-badge" onClick={handleNotificationClick}>
                 <Bell size={18} />
                 <span className="notification-count">{unreadCount}</span>
-              </div>
+              </button>
             ) : (
               'مين تحب تحجز معاه تاني؟ تقدر ترجع لأقرب مزودي خدمة ليك في أي وقت.'
             )}
@@ -436,7 +632,10 @@ export default function ClientDashboard() {
                         <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{job.description}</div>
                       )}
                     </div>
-                    {renderStatusChip(job)}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                      {renderStatusChip(job)}
+                      {renderRatingForm(job)}
+                    </div>
                   </div>
                 ))
               )}

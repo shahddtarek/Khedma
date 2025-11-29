@@ -2,12 +2,23 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Wrench, Hammer, Paintbrush } from 'lucide-react';
 import * as dataService from '../services/dataService';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ServicesPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [registeredWorkers, setRegisteredWorkers] = useState([]);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+  const [orderForm, setOrderForm] = useState({
+    serviceName: '',
+    description: '',
+    appointmentDate: '',
+    phone: '',
+  });
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
 
   // بيانات أكثر واقعية للحرفيين
   const staticWorkers = [
@@ -99,7 +110,7 @@ export default function ServicesPage() {
       completedJobs: 167,
       yearsExp: 9
     }
-  ];
+  ].map((worker) => ({ ...worker, isRegistered: false }));
 
   const categories = [
     { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff" },
@@ -124,15 +135,78 @@ export default function ServicesPage() {
       completedJobs: worker.completedJobs || 0,
       yearsExp: worker.yearsExperience || 1,
       photos: worker.workPhotos || worker.photos || [],
+      isRegistered: true,
+      profilePhoto: worker.profilePhoto || null,
     }));
     setRegisteredWorkers(mapped);
   }, []);
 
   const allWorkersData = [...staticWorkers, ...registeredWorkers];
 
-  // دالة لفتح صفحة الدفع
   const handleOrderNow = (worker) => {
-    navigate('/payment-method', { state: { provider: worker } });
+    if (!user) {
+      alert('يرجى تسجيل الدخول لتقديم طلب خدمة.');
+      return;
+    }
+    if (!worker?.isRegistered) {
+      alert('هذا المزود للعرض فقط. اختر مزوداً مسجلاً لعمل طلب حقيقي.');
+      return;
+    }
+    setSelectedWorker(worker);
+    setOrderForm({
+      serviceName: worker.profession_ar || '',
+      description: '',
+      appointmentDate: '',
+      phone: user?.phone || '',
+    });
+    setOrderModalOpen(true);
+  };
+
+  const handleOrderSubmit = (event) => {
+    event.preventDefault();
+    if (!selectedWorker || !user) return;
+    if (!orderForm.description || !orderForm.appointmentDate) {
+      alert('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.');
+      return;
+    }
+    setOrderSubmitting(true);
+    try {
+      dataService.createJob({
+        clientId: user.id,
+        clientName: user.fullName || user.name || user.email,
+        workerId: selectedWorker.id,
+        workerName: selectedWorker.name,
+        serviceName: orderForm.serviceName || selectedWorker.profession_ar,
+        description: orderForm.description,
+        phone: orderForm.phone || user.phone || 'غير محدد',
+        location: user.address || user.city || 'غير محدد',
+        appointmentDate: orderForm.appointmentDate,
+      });
+      alert('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.');
+      setOrderModalOpen(false);
+      setOrderForm({
+        serviceName: '',
+        description: '',
+        appointmentDate: '',
+        phone: '',
+      });
+      setSelectedWorker(null);
+    } catch (error) {
+      alert(error.message || 'حدث خطأ أثناء إرسال الطلب');
+    } finally {
+      setOrderSubmitting(false);
+    }
+  };
+
+  const closeOrderModal = () => {
+    setOrderModalOpen(false);
+    setSelectedWorker(null);
+    setOrderForm({
+      serviceName: '',
+      description: '',
+      appointmentDate: '',
+      phone: user?.phone || '',
+    });
   };
 
   // دالة لفتح صفحة الملف الشخصي
@@ -493,6 +567,96 @@ export default function ServicesPage() {
           font-weight: 600;
         }
 
+        .order-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.58);
+          backdrop-filter: blur(4px);
+          z-index: 40;
+        }
+
+        .order-modal {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: min(520px, 92%);
+          background: #ffffff;
+          border-radius: 24px;
+          padding: 28px;
+          box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
+          z-index: 41;
+        }
+
+        .order-modal h3 {
+          font-size: 22px;
+          margin-bottom: 6px;
+        }
+
+        .order-modal p {
+          font-size: 14px;
+          color: #6b7280;
+          margin-bottom: 20px;
+        }
+
+        .order-form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-bottom: 14px;
+        }
+
+        .order-form-group label {
+          font-weight: 600;
+          font-size: 14px;
+          color: #0f172a;
+        }
+
+        .order-form-input {
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          padding: 10px 12px;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 14px;
+        }
+
+        .order-form-textarea {
+          min-height: 90px;
+          resize: vertical;
+        }
+
+        .order-modal-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 10px;
+        }
+
+        .order-submit-btn,
+        .order-cancel-btn {
+          flex: 1;
+          padding: 12px;
+          border-radius: 12px;
+          border: none;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: 'Tajawal', sans-serif;
+        }
+
+        .order-submit-btn {
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          color: white;
+        }
+
+        .order-submit-btn:disabled {
+          opacity: 0.7;
+          cursor: progress;
+        }
+
+        .order-cancel-btn {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
         @media (max-width: 768px) {
           .workers-grid {
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -628,6 +792,63 @@ export default function ServicesPage() {
             </div>
           )}
         </section>
+
+        {orderModalOpen && selectedWorker && (
+          <>
+            <div className="order-modal-backdrop" onClick={closeOrderModal}></div>
+            <div className="order-modal">
+              <h3>طلب خدمة من {selectedWorker.name}</h3>
+              <p>سيتم إرسال تفاصيلك فوراً إلى المزود ليؤكد الموعد.</p>
+              <form onSubmit={handleOrderSubmit}>
+                <div className="order-form-group">
+                  <label>نوع الخدمة</label>
+                  <input
+                    className="order-form-input"
+                    type="text"
+                    value={orderForm.serviceName}
+                    onChange={(e) => setOrderForm((prev) => ({ ...prev, serviceName: e.target.value }))}
+                  />
+                </div>
+                <div className="order-form-group">
+                  <label>وصف المشكلة</label>
+                  <textarea
+                    className="order-form-input order-form-textarea"
+                    value={orderForm.description}
+                    onChange={(e) => setOrderForm((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="اشرح احتياجك ليقدر المزود مدة وتكلفة الخدمة"
+                  />
+                </div>
+                <div className="order-form-group">
+                  <label>ميعاد الزيارة</label>
+                  <input
+                    className="order-form-input"
+                    type="datetime-local"
+                    value={orderForm.appointmentDate}
+                    onChange={(e) => setOrderForm((prev) => ({ ...prev, appointmentDate: e.target.value }))}
+                  />
+                </div>
+                <div className="order-form-group">
+                  <label>رقم التواصل</label>
+                  <input
+                    className="order-form-input"
+                    type="tel"
+                    value={orderForm.phone}
+                    onChange={(e) => setOrderForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    placeholder="رقم هاتفك لتأكيد الموعد"
+                  />
+                </div>
+                <div className="order-modal-actions">
+                  <button type="submit" className="order-submit-btn" disabled={orderSubmitting}>
+                    {orderSubmitting ? 'يتم الإرسال...' : 'تأكيد الطلب'}
+                  </button>
+                  <button type="button" className="order-cancel-btn" onClick={closeOrderModal}>
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

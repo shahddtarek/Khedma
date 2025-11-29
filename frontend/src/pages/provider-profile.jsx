@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
@@ -23,39 +23,12 @@ export default function ServiceProviderProfile() {
     phone: '',
     appointmentDate: '',
   });
-  const [reviewStates, setReviewStates] = useState({});
-
-  const reviewStatesRef = useRef({});
-  
-  const [reviews, setReviews] = useState([
-    { 
-      id: 1, 
-      name: 'سيف سمير', 
-      initial: 'س', 
-      gradient: 'linear-gradient(135deg, #ec4899, #8b5cf6)', 
-      text: 'بصراحة ممتاز ومحترم في عمله. أنهى العمل بسرعة ودقة واحترافية.',
-      likes: 10,
-      dislikes: 2
-    },
-    { 
-      id: 2, 
-      name: 'عبدالرحمن طارق', 
-      initial: 'ع', 
-      gradient: 'linear-gradient(135deg, #10b981, #059669)', 
-      text: 'خدمة ممتازة وذكي. انصح بهذا الفني.',
-      likes: 5,
-      dislikes: 1
-    },
-    { 
-      id: 3, 
-      name: 'شهد طارق', 
-      initial: 'ش', 
-      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', 
-      text: 'ممتاز ومحترف، أنهى العمل باحترافية ودقة. أنصح به الجميع.',
-      likes: 12,
-      dislikes: 3
-    }
-  ]);
+  const [ratingSummary, setRatingSummary] = useState({
+    average: 0,
+    total: 0,
+    breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    ratings: [],
+  });
 
   useEffect(() => {
     if (workerId) {
@@ -77,6 +50,12 @@ export default function ServiceProviderProfile() {
   }, [workerId, location]);
 
   const providerSource = workerData || location?.state?.provider || null;
+  const providerId = providerSource?.id || null;
+
+  useEffect(() => {
+    if (!providerId) return;
+    setRatingSummary(dataService.getRatingStatsForUser(providerId));
+  }, [providerId]);
 
   const provider = {
     id: providerSource?.id,
@@ -147,82 +126,31 @@ export default function ServiceProviderProfile() {
         { days: 'السبت - الأحد', time: 'عطلة', closed: true },
       ];
 
-  const ratings = [
-    { stars: 5, percent: 75 },
-    { stars: 4, percent: 15 },
-    { stars: 3, percent: 5 },
-    { stars: 2, percent: 3 },
-    { stars: 1, percent: 2 }
-  ];
+  const hasRatings = ratingSummary.total > 0;
+  const roundedAverage = hasRatings ? ratingSummary.average.toFixed(1) : '0.0';
+  const averageStars = Math.round(ratingSummary.average || 0);
+  const ratingBars = [5, 4, 3, 2, 1].map((stars) => ({
+    stars,
+    percent: hasRatings ? Math.round(((ratingSummary.breakdown[stars] || 0) / ratingSummary.total) * 100) : 0,
+    count: ratingSummary.breakdown[stars] || 0,
+  }));
+  const ratingList = ratingSummary.ratings;
   const workImages =
     provider.workPhotos && provider.workPhotos.length > 0
       ? provider.workPhotos
       : [example1, example2, example3, example4, example5, example6];
 
+  const isElectrician =
+    provider.professionKey === 'electrician' ||
+    provider.profession === 'electrician' ||
+    provider.profession_ar === 'الكهرباء' ||
+    matchedCategory?.key === 'electrician';
 
-  const handleLike = (reviewId, action) => {
-    const currentState = reviewStatesRef.current[reviewId] || null;
-    
-    let newState = null;
-    if (action === 'like') 
-    {
-      newState = currentState === 'like' ? null : 'like';
-    } 
-    else if (action === 'dislike') 
-    {
-      newState = currentState === 'dislike' ? null : 'dislike';
-    }
+  const electricServiceLabels = matchedCategory
+    ? matchedCategory.subServices.map((sub) => sub.name)
+    : services.map((service) => service.label);
 
-    setReviews(prevReviews => {
-      return prevReviews.map(review => {
-        if (review.id !== reviewId) return review;
 
-        let newLikes = review.likes;
-        let newDislikes = review.dislikes;
-
-        if (action === 'like') 
-        {
-          if (currentState === 'like') 
-          {
-            newLikes = Math.max(0, review.likes - 1);
-          } 
-          else 
-          {
-            newLikes = review.likes + 1;
-            if (currentState === 'dislike') 
-            {
-              newDislikes = Math.max(0, review.dislikes - 1);
-            }
-          }
-        } 
-        else if (action === 'dislike') 
-        {
-          if (currentState === 'dislike') 
-          {
-            newDislikes = Math.max(0, review.dislikes - 1);
-          } 
-          else 
-          {
-            newDislikes = review.dislikes + 1;
-            if (currentState === 'like') 
-            {
-              newLikes = Math.max(0, review.likes - 1);
-            }
-          }
-        }
-
-        return {
-          ...review,
-          likes: newLikes,
-          dislikes: newDislikes
-        };
-      });
-    });
-
-    reviewStatesRef.current[reviewId] = newState;
-    
-    setReviewStates(prev => ({ ...prev, [reviewId]: newState }));
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -698,6 +626,74 @@ export default function ServiceProviderProfile() {
           font-size: 13px;
         }
 
+        .electric-services-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .electric-services-list li {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: linear-gradient(135deg, #fef9c3, #fde68a);
+          border-radius: 14px;
+          padding: 12px 16px;
+          font-weight: 600;
+          color: #92400e;
+          box-shadow: 0 10px 25px rgba(251, 191, 36, 0.25);
+          transform: translateX(12px);
+          opacity: 0;
+          animation: slideIn 0.4s forwards;
+        }
+
+        .electric-services-list li:nth-child(even) {
+          background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+          color: #075985;
+          box-shadow: 0 10px 25px rgba(14, 165, 233, 0.25);
+        }
+
+        .pulse-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #f97316;
+          box-shadow: 0 0 0 rgba(249, 115, 22, 0.7);
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+          }
+        }
+
+        @keyframes slideIn {
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .no-reviews {
+          margin-top: 12px;
+          padding: 16px;
+          border-radius: 12px;
+          background: #f8fafc;
+          color: #64748b;
+          text-align: center;
+          font-weight: 600;
+        }
+
         /* Modal */
         .modal-backdrop {
           position: fixed;
@@ -881,18 +877,24 @@ export default function ServiceProviderProfile() {
                 <h2 className="section-title">التقييمات</h2>
                 <div className="rating-summary">
                   <div className="rating-score">
-                    <div className="rating-number">{provider.rating.toFixed(1)}</div>
+                    <div className="rating-number">{roundedAverage}</div>
                     <div className="stars">
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <span key={i} className="star">⭐</span>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <span
+                          key={i}
+                          className="star"
+                          style={{ opacity: averageStars >= i ? 1 : 0.2 }}
+                        >
+                          ⭐
+                        </span>
                       ))}
                     </div>
                     <div style={{ color: '#64748b', fontSize: '13px' }}>
-                      {provider.reviewsCount} تقرير
+                      {hasRatings ? `${ratingSummary.total} تقييم` : 'لم يتم إضافة تقييمات بعد'}
                     </div>
                   </div>
                   <div className="rating-bars">
-                    {ratings.map(r => (
+                    {ratingBars.map((r) => (
                       <div key={r.stars} className="rating-bar-row">
                         <span style={{ 
                           color: '#64748b', 
@@ -920,78 +922,73 @@ export default function ServiceProviderProfile() {
                     ))}
                   </div>
                 </div>
-                {reviews.map(review => (
-                  <div key={review.id} className="review-item">
-                    <div 
-                      className="review-avatar" 
-                      style={{ background: review.gradient }}
-                    >
-                      {review.initial}
-                    </div>
-                    <div className="review-content">
-                      <div className="review-header">
-                        <h3 className="review-name">{review.name}</h3>
-                        <div className="stars">
-                          {[1, 2, 3, 4, 5].map(i => (
-                            <span 
-                              key={i} 
-                              style={{ color: '#fbbf24', fontSize: '14px' }}
-                            >
-                              ⭐
-                            </span>
-                          ))}
+                {hasRatings ? (
+                  ratingList.map((review) => {
+                    const gradient =
+                      review.fromRole === 'worker'
+                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                        : 'linear-gradient(135deg, #3b82f6, #6366f1)';
+                    return (
+                      <div key={review.id} className="review-item">
+                        <div className="review-avatar" style={{ background: gradient }}>
+                          {(review.fromName || 'م').charAt(0)}
+                        </div>
+                        <div className="review-content">
+                          <div className="review-header">
+                            <h3 className="review-name">{review.fromName || 'مستخدم من خدمة'}</h3>
+                            <div className="stars">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <span
+                                  key={i}
+                                  style={{ color: '#fbbf24', fontSize: '14px', opacity: i <= review.score ? 1 : 0.2 }}
+                                >
+                                  ⭐
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="review-text">{review.comment || 'لا يوجد تعليق مكتوب، لكن التقييم إيجابي. ✨'}</p>
+                          <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                            {new Date(review.createdAt).toLocaleDateString('ar-EG')} • خدمة {review.serviceName || 'خدمة'}
+                          </div>
                         </div>
                       </div>
-                      <p className="review-text">{review.text}</p>
-                      <div className="review-actions">
-                        <button 
-                          onClick={() => handleLike(review.id, 'like')} 
-                          className={`review-btn ${
-                            reviewStates[review.id] === 'like' ? 'active-like' : ''
-                          }`}
-                          title={reviewStates[review.id] === 'like' ? 'إلغاء الإعجاب' : 'إعجاب'}
-                        >
-                          <span className="review-btn-emoji">
-                            {reviewStates[review.id] === 'like' ? '👍' : '👍'}
-                          </span>
-                          <span className="review-btn-count">{review.likes}</span>
-                        </button>
-                        <button 
-                          onClick={() => handleLike(review.id, 'dislike')} 
-                          className={`review-btn ${
-                            reviewStates[review.id] === 'dislike' ? 'active-dislike' : ''
-                          }`}
-                          title={reviewStates[review.id] === 'dislike' ? 'إلغاء عدم الإعجاب' : 'عدم إعجاب'}
-                        >
-                          <span className="review-btn-emoji">
-                            {reviewStates[review.id] === 'dislike' ? '👎' : '👎'}
-                          </span>
-                          <span className="review-btn-count">{review.dislikes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })
+                ) : (
+                  <p className="no-reviews">لا توجد تقييمات بعد لهذا المزود. كن أول من يشاركه تجربتك!</p>
+                )}
               </section>
             </div>
 
             <aside className="sidebar">
               <div className="card">
                 <h2 className="section-title">الخدمات المقدمة</h2>
-                <div className="services-grid">
-                  {services.map((service) => (
-                    <div key={service.label} className="service-card">
-                      <span className="service-name">{service.label}</span>
-                      {service.features && service.features.length > 0 && (
-                        <ul className="service-features">
-                          {service.features.map((feature) => (
-                            <li key={feature}>{feature}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {isElectrician ? (
+                  <ul className="electric-services-list">
+                    {electricServiceLabels.map((label, index) => (
+                      <li key={label} style={{ animationDelay: `${index * 0.05}s` }}>
+                        <span className="pulse-dot" />
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="services-grid">
+                    {services.map((service) => (
+                      <div key={service.label} className="service-card">
+                        <span className="service-name">{service.label}</span>
+                        {service.features && service.features.length > 0 && (
+                          <ul className="service-features">
+                            {service.features.map((feature) => (
+                              <li key={feature}>{feature}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </aside>
           </div>

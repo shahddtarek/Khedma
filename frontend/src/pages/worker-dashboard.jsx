@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, CheckCircle2, Clock, TrendingUp, Bell, Check, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, TrendingUp, Bell, Check, XCircle, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
+
+const getJobStatusMeta = (status) =>
+  status === 'accepted'
+    ? { label: 'قيد التنفيذ', color: '#1d4ed8' }
+    : { label: 'مكتمل', color: '#16a34a' };
 
 export default function WorkerDashboard() {
   const { user } = useAuth();
@@ -9,6 +14,9 @@ export default function WorkerDashboard() {
   const profession = user?.profession_ar || 'حرفي';
   const [jobs, setJobs] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [authoredRatings, setAuthoredRatings] = useState({});
+  const [ratingDrafts, setRatingDrafts] = useState({});
+  const [submittingJobId, setSubmittingJobId] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -20,6 +28,12 @@ export default function WorkerDashboard() {
     if (!user?.id) return;
     setJobs(dataService.getJobsForWorker(user.id));
     setUnreadCount(dataService.getUnreadNotificationCount(user.id));
+    const ownRatings = dataService.getRatingsAuthoredByUser(user.id);
+    const mapped = ownRatings.reduce((acc, rating) => {
+      acc[rating.jobId] = rating;
+      return acc;
+    }, {});
+    setAuthoredRatings(mapped);
   };
 
   const handleJobAction = (jobId, status) => {
@@ -27,10 +41,109 @@ export default function WorkerDashboard() {
     refreshDashboard();
   };
 
+  const handleNotificationClick = () => {
+    if (!user?.id || unreadCount === 0) return;
+    dataService.markAllNotificationsAsRead(user.id);
+    setUnreadCount(0);
+  };
+
+  const handleDraftChange = (jobId, field, value) => {
+    setRatingDrafts((prev) => ({
+      ...prev,
+      [jobId]: {
+        ...prev[jobId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleRatingSubmit = (job) => {
+    if (!job.clientId) {
+      alert('لا يمكن تحديد العميل لهذا الطلب');
+      return;
+    }
+
+    const draft = ratingDrafts[job.id];
+    if (!draft?.score) {
+      alert('اختر تقييم من 1 إلى 5 نجوم');
+      return;
+    }
+
+    setSubmittingJobId(job.id);
+    try {
+      dataService.addRating({
+        jobId: job.id,
+        fromUserId: user.id,
+        toUserId: job.clientId,
+        score: Number(draft.score),
+        comment: draft.comment || '',
+        fromRole: 'worker',
+      });
+      refreshDashboard();
+      setRatingDrafts((prev) => ({
+        ...prev,
+        [job.id]: { score: '', comment: '' },
+      }));
+    } catch (error) {
+      alert(error.message || 'حدث خطأ أثناء إرسال التقييم');
+    } finally {
+      setSubmittingJobId(null);
+    }
+  };
+
+  const renderRatingForm = (job) => {
+    const canRate = (job.status === 'accepted' || job.status === 'completed') && !authoredRatings[job.id];
+    if (!canRate) {
+      const existing = authoredRatings[job.id];
+      if (!existing) return null;
+      return (
+        <div className="rating-status">
+          <span>⭐ {existing.score}</span>
+          <span>تم تقييم العميل</span>
+        </div>
+      );
+    }
+
+    const draft = ratingDrafts[job.id] || { score: '', comment: '' };
+    return (
+      <div className="rating-form">
+        <div className="rating-stars">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`star-button ${Number(draft.score) >= value ? 'active' : ''}`}
+              onClick={() => handleDraftChange(job.id, 'score', value)}
+            >
+              <Star size={16} />
+            </button>
+          ))}
+        </div>
+        <textarea
+          className="rating-textarea"
+          rows={2}
+          placeholder="اكتب تعليقك عن العميل..."
+          value={draft.comment || ''}
+          onChange={(e) => handleDraftChange(job.id, 'comment', e.target.value)}
+        />
+        <button
+          className="rating-submit"
+          onClick={() => handleRatingSubmit(job)}
+          disabled={submittingJobId === job.id}
+        >
+          {submittingJobId === job.id ? 'جاري الإرسال...' : 'إرسال التقييم'}
+        </button>
+      </div>
+    );
+  };
+
   const pendingJobs = jobs.filter((job) => job.status === 'pending');
   const acceptedJobs = jobs.filter((job) => job.status === 'accepted');
   const completedJobs = jobs.filter((job) => job.status === 'completed');
   const earningsEstimate = acceptedJobs.length * 200 + completedJobs.length * 300;
+  const rateableJobs = jobs.filter(
+    (job) => (job.status === 'accepted' || job.status === 'completed') && job.clientId,
+  );
 
   const dayLabels = {
     sunday: 'أحد',
@@ -98,6 +211,14 @@ export default function WorkerDashboard() {
           color: #ffffff;
           font-weight: 800;
           font-size: 18px;
+          overflow: hidden;
+          border: 2px solid #e0e7ff;
+        }
+
+        .avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .profile-text {
@@ -256,6 +377,8 @@ export default function WorkerDashboard() {
           border-radius: 50%;
           background: #eff6ff;
           color: #1d4ed8;
+          border: none;
+          cursor: pointer;
         }
 
         .notification-count {
@@ -376,13 +499,110 @@ export default function WorkerDashboard() {
             grid-template-columns: 1fr;
           }
         }
+
+        .rating-panel {
+          margin-top: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .rating-card {
+          border: 1px solid #e0e7ff;
+          border-radius: 16px;
+          padding: 14px;
+          background: #f8fafc;
+        }
+
+        .rating-form {
+          margin-top: 10px;
+          padding: 12px;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1px solid #dbeafe;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+          animation: fadeInUp 0.4s ease;
+        }
+
+        .rating-stars {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+
+        .star-button {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #e2e8f0;
+          color: #fbbf24;
+          cursor: pointer;
+          transition: transform 0.2s, background 0.2s;
+        }
+
+        .star-button.active {
+          background: #fde68a;
+          transform: translateY(-2px);
+        }
+
+        .rating-textarea {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 8px 10px;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 13px;
+          resize: vertical;
+          margin-bottom: 10px;
+        }
+
+        .rating-submit {
+          width: 100%;
+          padding: 10px;
+          border: none;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #10b981, #34d399);
+          color: white;
+          font-weight: 700;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+
+        .rating-submit:disabled {
+          opacity: 0.7;
+          cursor: progress;
+        }
+
+        .rating-status {
+          margin-top: 10px;
+          padding: 10px;
+          border-radius: 10px;
+          background: #dcfce7;
+          color: #166534;
+          display: flex;
+          justify-content: space-between;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
       `}</style>
 
       <div className="layout">
         <aside className="sidebar">
           <div className="profile-header">
             <div className="avatar">
-              {displayName.charAt(0)}
+              {user?.profilePhoto ? <img src={user.profilePhoto} alt="صورة المزود" /> : displayName.charAt(0)}
             </div>
             <div className="profile-text">
               <span className="profile-name">{displayName}</span>
@@ -408,10 +628,10 @@ export default function WorkerDashboard() {
 
           <div className="nav-footer">
             {unreadCount > 0 ? (
-              <div className="notification-badge">
+              <button type="button" className="notification-badge" onClick={handleNotificationClick}>
                 <Bell size={18} />
                 <div className="notification-count">{unreadCount}</div>
-              </div>
+              </button>
             ) : (
               'جاهز تستقبل شغل جديد النهارده؟ 👌'
             )}
@@ -543,6 +763,42 @@ export default function WorkerDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {rateableJobs.length > 0 && (
+            <div className="panel">
+              <div className="panel-header">
+                <span className="panel-title">تقييم العملاء</span>
+              </div>
+              <div className="rating-panel">
+                {rateableJobs.map((job) => {
+                  const { label, color } = getJobStatusMeta(job.status);
+                  return (
+                    <div key={job.id} className="rating-card">
+                      <div style={{ display: 'flex', "justify-content": 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{job.clientName}</div>
+                          <div style={{ fontSize: 12, color: '#6b7280' }}>
+                            خدمة: {job.serviceName || 'خدمة'} • بتاريخ{' '}
+                            {new Date(job.createdAt).toLocaleDateString('ar-EG')}
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color,
+                          }}
+                        >
+                          {label}
+                        </span>
+                      </div>
+                      {renderRatingForm(job)}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

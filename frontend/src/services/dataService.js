@@ -4,6 +4,7 @@ const getInitialDB = () => ({
   users: [],
   jobs: [],
   notifications: [],
+  ratings: [],
 });
 
 const isBrowser = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -24,6 +25,7 @@ const readDB = () => {
       users: Array.isArray(parsed.users) ? parsed.users : [],
       jobs: Array.isArray(parsed.jobs) ? parsed.jobs : [],
       notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+      ratings: Array.isArray(parsed.ratings) ? parsed.ratings : [],
     };
   } catch {
     return getInitialDB();
@@ -37,6 +39,8 @@ const writeDB = (db) => {
   window.localStorage.setItem(DB_KEY, JSON.stringify(db));
   return db;
 };
+
+const findJobById = (db, jobId) => db.jobs.find((job) => job.id === jobId) || null;
 
 const generateId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
@@ -146,6 +150,11 @@ export const getJobsForWorker = (workerId) => {
   return db.jobs.filter((job) => job.workerId === workerId);
 };
 
+export const getJobById = (jobId) => {
+  const db = readDB();
+  return findJobById(db, jobId);
+};
+
 export const getJobsForClient = (clientId) => {
   const db = readDB();
   return db.jobs.filter((job) => job.clientId === clientId);
@@ -210,6 +219,131 @@ export const markNotificationAsRead = (notificationId) => {
   db.notifications[notifIndex].readAt = new Date().toISOString();
   writeDB(db);
   return db.notifications[notifIndex];
+};
+
+export const markAllNotificationsAsRead = (userId) => {
+  const db = readDB();
+  let changed = false;
+  db.notifications = db.notifications.map((notification) => {
+    if (notification.userId !== userId || notification.read) {
+      return notification;
+    }
+    changed = true;
+    return {
+      ...notification,
+      read: true,
+      readAt: new Date().toISOString(),
+    };
+  });
+
+  if (changed) {
+    writeDB(db);
+  }
+  return changed;
+};
+
+export const addRating = ({ jobId, fromUserId, toUserId, score, comment = '', fromRole }) => {
+  if (!jobId || !fromUserId || !toUserId) {
+    throw new Error('بيانات التقييم غير مكتملة');
+  }
+
+  const numericScore = Number(score);
+  if (Number.isNaN(numericScore) || numericScore < 1 || numericScore > 5) {
+    throw new Error('التقييم يجب أن يكون بين 1 و 5');
+  }
+
+  const db = readDB();
+  const job = findJobById(db, jobId);
+  if (!job) {
+    throw new Error('لم يتم العثور على الطلب المطلوب');
+  }
+
+  const existingIndex = db.ratings.findIndex(
+    (rating) => rating.jobId === jobId && rating.fromUserId === fromUserId && rating.toUserId === toUserId,
+  );
+
+  const ratingPayload = {
+    id: existingIndex === -1 ? generateId() : db.ratings[existingIndex].id,
+    jobId,
+    fromUserId,
+    toUserId,
+    score: numericScore,
+    comment: comment?.trim() || '',
+    fromRole: fromRole || 'client',
+    fromName: job.clientId === fromUserId ? job.clientName : job.workerName,
+    toName: job.clientId === toUserId ? job.clientName : job.workerName,
+    serviceName: job.serviceName || 'خدمة',
+    createdAt: existingIndex === -1 ? new Date().toISOString() : db.ratings[existingIndex].createdAt,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (existingIndex === -1) {
+    db.ratings.push(ratingPayload);
+  } else {
+    db.ratings[existingIndex] = ratingPayload;
+  }
+
+  writeDB(db);
+  return ratingPayload;
+};
+
+export const getRatingsAuthoredByUser = (userId) => {
+  const db = readDB();
+  return db.ratings.filter((rating) => rating.fromUserId === userId);
+};
+
+export const getRatingsReceivedByUser = (userId) => {
+  const db = readDB();
+  return db.ratings.filter((rating) => rating.toUserId === userId);
+};
+
+export const getRatingForJobBetweenUsers = (jobId, fromUserId, toUserId) => {
+  const db = readDB();
+  return (
+    db.ratings.find(
+      (rating) => rating.jobId === jobId && rating.fromUserId === fromUserId && rating.toUserId === toUserId,
+    ) || null
+  );
+};
+
+export const getRatingStatsForUser = (userId) => {
+  const received = getRatingsReceivedByUser(userId);
+  if (!received.length) {
+    return {
+      average: 0,
+      total: 0,
+      breakdown: {
+        5: 0,
+        4: 0,
+        3: 0,
+        2: 0,
+        1: 0,
+      },
+      ratings: [],
+    };
+  }
+
+  const breakdown = {
+    5: 0,
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0,
+  };
+
+  received.forEach((rating) => {
+    breakdown[rating.score] = (breakdown[rating.score] || 0) + 1;
+  });
+
+  const average =
+    received.reduce((sum, rating) => sum + rating.score, 0) / (received.length || 1);
+
+  return {
+    average,
+    total: received.length,
+    breakdown,
+    ratings: received.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+  };
 };
 
 export const exportDatabase = () => readDB();
