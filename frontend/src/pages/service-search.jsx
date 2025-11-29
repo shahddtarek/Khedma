@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Wrench, Hammer, Paintbrush } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import * as dataService from '../services/dataService';
 
 export default function ServicesPage() {
   const navigate = useNavigate();
-  const { users = [] } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [registeredWorkers, setRegisteredWorkers] = useState([]);
 
   // بيانات أكثر واقعية للحرفيين
   const staticWorkers = [
@@ -111,22 +111,22 @@ export default function ServicesPage() {
     { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7" }
   ];
 
-  const registeredWorkers = useMemo(() => {
-    return (users || [])
-      .filter((u) => u.role === 'worker' && u.professionKey)
-      .map((u, index) => ({
-        id: 1000 + index,
-        name: u.fullName || u.name || u.email,
-        profession: u.professionKey,
-        profession_ar: u.profession_ar || 'حرفي',
-        distance: 2.0,
-        rating: 4.6,
-        status: 'available',
-        completedJobs: 0,
-        yearsExp: 1,
-        photos: u.photos || [],
-      }));
-  }, [users]);
+  useEffect(() => {
+    const workers = dataService.getAllWorkers();
+    const mapped = workers.map((worker) => ({
+      id: worker.id,
+      name: worker.fullName || worker.name || worker.email,
+      profession: worker.professionKey,
+      profession_ar: worker.profession_ar || 'حرفي',
+      distance: (Math.random() * 5 + 1).toFixed(1),
+      rating: worker.rating || 4.6,
+      status: 'available',
+      completedJobs: worker.completedJobs || 0,
+      yearsExp: worker.yearsExperience || 1,
+      photos: worker.workPhotos || worker.photos || [],
+    }));
+    setRegisteredWorkers(mapped);
+  }, []);
 
   const allWorkersData = [...staticWorkers, ...registeredWorkers];
 
@@ -137,7 +137,11 @@ export default function ServicesPage() {
 
   // دالة لفتح صفحة الملف الشخصي
   const handleViewProfile = (worker) => {
-    navigate('/provider-profile', { state: { provider: worker } });
+    if (worker.id) {
+      navigate(`/provider-profile/${worker.id}`, { state: { provider: worker } });
+    } else {
+      navigate('/provider-profile', { state: { provider: worker } });
+    }
   };
 
   // تصفية البيانات

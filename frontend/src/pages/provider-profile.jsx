@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import * as dataService from '../services/dataService';
 import example1 from '../assets/Images/example1.jpeg';
 import example2 from '../assets/Images/example2.jpeg';
 import example3 from '../assets/Images/example3.jpeg';
@@ -9,12 +11,16 @@ import example6 from '../assets/Images/example6.jpeg';
 
 export default function ServiceProviderProfile() {
   const location = useLocation();
+  const { workerId } = useParams();
+  const { user } = useAuth();
+  const [workerData, setWorkerData] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    serviceType: '', 
-    description: '', 
-    name: '', 
-    phone: '' 
+  const [formData, setFormData] = useState({
+    serviceType: '',
+    description: '',
+    name: '',
+    phone: '',
+    appointmentDate: '',
   });
   const [reviewStates, setReviewStates] = useState({});
 
@@ -50,17 +56,62 @@ export default function ServiceProviderProfile() {
     }
   ]);
 
-  const providerFromState = location?.state?.provider;
+  useEffect(() => {
+    if (workerId) {
+      const worker = dataService.getUserById(workerId);
+      if (worker) {
+        setWorkerData(worker);
+        return;
+      }
+    }
+    if (location?.state?.provider) {
+      const fromState = location.state.provider;
+      if (fromState?.id) {
+        const fullWorker = dataService.getUserById(fromState.id);
+        setWorkerData(fullWorker || fromState);
+      } else {
+        setWorkerData(fromState);
+      }
+    }
+  }, [workerId, location]);
+
+  const providerSource = workerData || location?.state?.provider || null;
+
   const provider = {
-    name: providerFromState?.name || 'مصطفى عبد الله',
-    job: providerFromState ? `${providerFromState.profession_ar} محترف` : 'سباك خبير',
-    summary: providerFromState 
-      ? `خبرة أكثر من ${providerFromState.yearsExp || 10} سنوات في أعمال ${providerFromState.profession_ar}. موثوق من خدمة.`
+    id: providerSource?.id,
+    name: providerSource?.fullName || providerSource?.name || 'مزود خدمة',
+    job: providerSource ? `${providerSource.profession_ar || 'حرفي'} محترف` : 'سباك خبير',
+    summary: providerSource
+      ? `خبرة أكثر من ${providerSource.yearsExperience || providerSource.yearsExp || 5} سنوات في أعمال ${
+          providerSource.profession_ar || 'الخدمات'
+        }. موثوق من خدمة.`
       : 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.',
-    rating: providerFromState?.rating || 4.8,
-    reviewsCount: providerFromState?.completedJobs || 125,
-    profession: providerFromState?.profession || 'plumber',
-    profession_ar: providerFromState?.profession_ar || 'سباك'
+    rating: providerSource?.rating || 4.8,
+    reviewsCount: providerSource?.completedJobs || 125,
+    profession: providerSource?.professionKey || providerSource?.profession || 'plumber',
+    profession_ar: providerSource?.profession_ar || 'سباك',
+    availableDays: providerSource?.availableDays || [],
+    availableHours: providerSource?.availableHours || '',
+    yearsExperience: providerSource?.yearsExperience || providerSource?.yearsExp || 5,
+    workPhotos: providerSource?.workPhotos || providerSource?.photos || [],
+  };
+
+  if (!providerSource) {
+    return (
+      <div className="provider-profile-page" style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <p>لم يتم العثور على مزود الخدمة المطلوب.</p>
+      </div>
+    );
+  }
+
+  const dayLabels = {
+    sunday: 'الأحد',
+    monday: 'الإثنين',
+    tuesday: 'الثلاثاء',
+    wednesday: 'الأربعاء',
+    thursday: 'الخميس',
+    friday: 'الجمعة',
+    saturday: 'السبت',
   };
 
   const services = [
@@ -72,11 +123,17 @@ export default function ServiceProviderProfile() {
     { icon: '🔧', label: 'صيانة وتركيب السخانات' }
   ];
 
-  const availability = [
-    { days: 'الإثنين - الخميس', time: 'من 5:00 م حتى 9:00 م', closed: false },
-    { days: 'الجمعة', time: 'من 12:00 م حتى 9:00 م', closed: false },
-    { days: 'السبت - الأحد', time: 'عطلة', closed: true }
-  ];
+  const availability = provider.availableDays.length
+    ? provider.availableDays.map((day) => ({
+        days: dayLabels[day] || day,
+        time: provider.availableHours || 'مرن حسب الاتفاق',
+        closed: false,
+      }))
+    : [
+        { days: 'الإثنين - الخميس', time: 'من 5:00 م حتى 9:00 م', closed: false },
+        { days: 'الجمعة', time: 'من 12:00 م حتى 9:00 م', closed: false },
+        { days: 'السبت - الأحد', time: 'عطلة', closed: true },
+      ];
 
   const ratings = [
     { stars: 5, percent: 75 },
@@ -85,7 +142,10 @@ export default function ServiceProviderProfile() {
     { stars: 2, percent: 3 },
     { stars: 1, percent: 2 }
   ];
-  const workImages = [example1, example2, example3, example4, example5, example6];
+  const workImages =
+    provider.workPhotos && provider.workPhotos.length > 0
+      ? provider.workPhotos
+      : [example1, example2, example3, example4, example5, example6];
 
 
   const handleLike = (reviewId, action) => {
@@ -154,13 +214,34 @@ export default function ServiceProviderProfile() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.serviceType || !formData.name || !formData.phone) {
+    if (!formData.serviceType || !formData.name || !formData.phone || !formData.appointmentDate) {
       alert('برجاء ملء جميع الحقول المطلوبة');
       return;
     }
+    if (!user) {
+      alert('يجب تسجيل الدخول أولاً لطلب خدمة');
+      return;
+    }
+    if (!provider.id) {
+      alert('لا يمكن تحديد مقدم الخدمة');
+      return;
+    }
+
+    dataService.createJob({
+      clientId: user.id,
+      clientName: user.fullName || user.name,
+      workerId: provider.id,
+      workerName: provider.name,
+      serviceName: formData.serviceType,
+      description: formData.description,
+      phone: formData.phone,
+      location: user.address || user.city || 'غير محدد',
+      appointmentDate: formData.appointmentDate,
+    });
+
     alert('تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
     setModalOpen(false);
-    setFormData({ serviceType: '', description: '', name: '', phone: '' });
+    setFormData({ serviceType: '', description: '', name: '', phone: '', appointmentDate: '' });
   };
 
   return (
@@ -955,6 +1036,15 @@ export default function ServiceProviderProfile() {
                   type="tel" 
                   value={formData.phone} 
                   onChange={e => setFormData({ ...formData, phone: e.target.value })} 
+                  className="input" 
+                />
+            </div>
+            <div className="form-group">
+              <label className="label">ميعاد الزيارة المتوقع</label>
+                <input 
+                  type="datetime-local" 
+                  value={formData.appointmentDate} 
+                  onChange={e => setFormData({ ...formData, appointmentDate: e.target.value })} 
                   className="input" 
                 />
             </div>

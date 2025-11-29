@@ -1,10 +1,69 @@
-import React from 'react';
-import { CalendarDays, Heart, MapPin, Wallet } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CalendarDays, Heart, MapPin, Wallet, Bell, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import * as dataService from '../services/dataService';
 
 export default function ClientDashboard() {
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'عميل خدمة';
+  const [jobs, setJobs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshDashboard();
+    }
+  }, [user]);
+
+  const refreshDashboard = () => {
+    if (!user?.id) return;
+    setJobs(dataService.getJobsForClient(user.id));
+    setUnreadCount(dataService.getUnreadNotificationCount(user.id));
+  };
+
+  const pendingJobs = jobs.filter((job) => job.status === 'pending');
+  const acceptedJobs = jobs.filter((job) => job.status === 'accepted');
+  const declinedJobs = jobs.filter((job) => job.status === 'declined');
+  const completedJobs = jobs.filter((job) => job.status === 'completed');
+  const totalSpending = (acceptedJobs.length + completedJobs.length) * 250;
+  const nextAppointment = acceptedJobs[0];
+
+  const renderStatusChip = (job) => {
+    if (job.status === 'accepted') {
+      return (
+        <span className="badge-status badge-accepted">
+          <CheckCircle2 size={14} />
+          <span>مقبول</span>
+        </span>
+      );
+    }
+    if (job.status === 'declined') {
+      return (
+        <span className="badge-status badge-declined">
+          <XCircle size={14} />
+          <span>مرفوض</span>
+        </span>
+      );
+    }
+    if (job.status === 'completed') {
+      return (
+        <span className="badge-status badge-completed">
+          <CheckCircle2 size={14} />
+          <span>مكتمل</span>
+        </span>
+      );
+    }
+    return (
+      <span className="badge-status badge-pending">
+        <Clock size={14} />
+        <span>معلق</span>
+      </span>
+    );
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="page-wrapper" dir="rtl">
@@ -100,6 +159,14 @@ export default function ClientDashboard() {
           font-weight: 600;
         }
 
+        .badge-muted {
+          font-size: 11px;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: #f9fafb;
+          color: #6b7280;
+        }
+
         .nav-footer {
           margin-top: 32px;
           font-size: 13px;
@@ -162,6 +229,34 @@ export default function ClientDashboard() {
           color: #0f172a;
         }
 
+        .notification-badge {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+
+        .notification-count {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          background: #ef4444;
+          color: white;
+          border-radius: 999px;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
         .booking-card {
           display: flex;
           justify-content: space-between;
@@ -188,22 +283,45 @@ export default function ClientDashboard() {
           display: flex;
           gap: 8px;
           color: #6b7280;
+          font-size: 12px;
         }
 
         .badge-status {
           font-size: 12px;
           padding: 4px 10px;
           border-radius: 999px;
-          background: #dcfce7;
-          color: #166534;
           font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
         }
 
-        .calendar-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-top: 8px;
+        .badge-pending {
+          background: #fef9c3;
+          color: #854d0e;
+        }
+
+        .badge-accepted {
+          background: #dcfce7;
+          color: #166534;
+        }
+
+        .badge-declined {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .badge-completed {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+
+        .next-appointment {
+          background: #f0f9ff;
+          border: 2px solid #3b82f6;
+          border-radius: 16px;
+          padding: 16px;
+          margin-top: 12px;
           font-size: 13px;
           color: #4b5563;
         }
@@ -253,7 +371,7 @@ export default function ClientDashboard() {
             </li>
             <li className="nav-item">
               <span>مفضلتي</span>
-              <span><Heart size={14} /></span>
+              <Heart size={14} />
             </li>
             <li className="nav-item">
               <span>بياناتي</span>
@@ -261,28 +379,36 @@ export default function ClientDashboard() {
           </ul>
 
           <div className="nav-footer">
-            مين تحب تحجز معاه تاني؟ تقدر ترجع لأقرب مزودي خدمة ليك في أي وقت.
+            {unreadCount > 0 ? (
+              <div className="notification-badge">
+                <Bell size={18} />
+                <span className="notification-count">{unreadCount}</span>
+              </div>
+            ) : (
+              'مين تحب تحجز معاه تاني؟ تقدر ترجع لأقرب مزودي خدمة ليك في أي وقت.'
+            )}
           </div>
         </aside>
 
         <main className="main">
           <div className="cards-grid">
             <div className="stat-card">
-              <div className="stat-label">الحجوزات القادمة</div>
-              <div className="stat-value">3</div>
-              <div className="stat-sub">أول زيارة بكرة الساعة ٦ مساءً</div>
+              <div className="stat-label">الطلبات المعلقة</div>
+              <div className="stat-value">{pendingJobs.length}</div>
+              <div className="stat-sub">في انتظار رد المزود</div>
             </div>
             <div className="stat-card">
-              <div className="stat-label">الخدمات اللي خلصت</div>
-              <div className="stat-value">8</div>
-              <div className="stat-sub">شكراً لاستخدامك خدمة 🙌</div>
+              <div className="stat-label">الطلبات المؤكدة</div>
+              <div className="stat-value">{acceptedJobs.length}</div>
+              <div className="stat-sub">قيد التنفيذ</div>
             </div>
             <div className="stat-card">
-              <div className="stat-label">إجمالي اللي صرفته</div>
+              <div className="stat-label">إجمالي الإنفاق</div>
               <div className="wallet-amount">
-                2,350 <span className="wallet-currency">جنيه</span>
+                {totalSpending}
+                <span className="wallet-currency">جنيه</span>
               </div>
-              <div className="wallet-note">من أول ما سجلت عندنا</div>
+              <div className="wallet-note">منذ انضمامك لخدمة</div>
             </div>
           </div>
 
@@ -292,47 +418,56 @@ export default function ClientDashboard() {
                 <span className="panel-title">حجوزاتي الأخيرة</span>
               </div>
 
-              <div className="booking-card">
-                <div className="booking-main">
-                  <span className="booking-service">سباكة • تصليح تسريب</span>
-                  <div className="booking-meta">
-                    <span>مع خالد</span>
-                    <span>•</span>
-                    <span>الخميس ٧ مساءً</span>
-                  </div>
+              {jobs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af' }}>
+                  لا توجد حجوزات حتى الآن
                 </div>
-                <span className="badge-status">مؤكد</span>
-              </div>
-
-              <div className="booking-card">
-                <div className="booking-main">
-                  <span className="booking-service">كهرباء • فك وتركيب نجف</span>
-                  <div className="booking-meta">
-                    <span>مع أحمد</span>
-                    <span>•</span>
-                    <span>تم من ٣ أيام</span>
+              ) : (
+                jobs.map((job) => (
+                  <div key={job.id} className="booking-card">
+                    <div className="booking-main">
+                      <span className="booking-service">{job.serviceName || 'خدمة'}</span>
+                      <div className="booking-meta">
+                        <span>مع: {job.workerName}</span>
+                        <span>•</span>
+                        <span>{new Date(job.createdAt).toLocaleDateString('ar-EG')}</span>
+                      </div>
+                      {job.description && (
+                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{job.description}</div>
+                      )}
+                    </div>
+                    {renderStatusChip(job)}
                   </div>
-                </div>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>تم</span>
-              </div>
+                ))
+              )}
             </div>
 
             <div className="panel">
               <div className="panel-header">
                 <span className="panel-title">موقعك وميعاد الزيارة الجاية</span>
               </div>
-              <div style={{ fontSize: 13, color: '#4b5563', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="next-appointment">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <MapPin size={16} />
-                  الجيزة، شارع جامعة الدول، عمارة ١٢
-                </span>
-                <div className="calendar-row">
-                  <CalendarDays size={16} />
-                  الأحد ٢٤ مارس • من ٥ لـ ٧ مساءً
+                  {user?.address || user?.city || 'لم يتم تحديد العنوان'}
                 </div>
-                <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
-                  هنبعتلك تذكير قبل الميعاد بساعة على الموبايل.
-                </div>
+                {nextAppointment ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                      <CalendarDays size={16} />
+                      {new Date(nextAppointment.createdAt).toLocaleDateString('ar-EG', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </div>
+                    <p style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
+                      المزود: {nextAppointment.workerName} • سنذكرك قبل الموعد بساعة.
+                    </p>
+                  </>
+                ) : (
+                  <p style={{ marginTop: 12, color: '#6b7280', fontSize: 13 }}>لا توجد مواعيد مؤكدة حالياً.</p>
+                )}
               </div>
             </div>
           </div>
@@ -355,5 +490,4 @@ export default function ClientDashboard() {
     </div>
   );
 }
-
 
