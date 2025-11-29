@@ -26,6 +26,8 @@ export default function RegisterPage() {
   const [role, setRole] = useState('user'); // 'worker' | 'user'
   const [specialtyKey, setSpecialtyKey] = useState('electrician');
   const [workPhotos, setWorkPhotos] = useState([]);
+  const [profilePhoto, setProfilePhoto] = useState('');
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState('');
   const [availableDays, setAvailableDays] = useState([]);
   const [availableHours, setAvailableHours] = useState('');
   const [yearsExperience, setYearsExperience] = useState(1);
@@ -110,6 +112,19 @@ export default function RegisterPage() {
       reader.onerror = (err) => reject(err);
     });
 
+  const handleProfilePhotoChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await convertFileToBase64(file);
+      setProfilePhoto(base64);
+      setProfilePhotoPreview(base64);
+    } catch (photoError) {
+      console.error(photoError);
+      setError('حدث خطأ أثناء تحميل صورة الملف الشخصي');
+    }
+  };
+
   const handlePhotosChange = async (event) => {
     const files = Array.from(event.target.files || []);
     const limited = files.slice(0, 5);
@@ -141,6 +156,7 @@ export default function RegisterPage() {
         city: city.trim(),
         address: address.trim(),
         role,
+        profilePhoto,
         professionKey: role === 'worker' ? specialtyKey : null,
         profession_ar: role === 'worker' ? selectedSpecialty?.label || null : null,
         availableDays: role === 'worker' ? availableDays : [],
@@ -521,6 +537,15 @@ export default function RegisterPage() {
           margin-top: 4px;
         }
 
+        .profile-photo-preview {
+          width: 80px;
+          height: 80px;
+          border-radius: 16px;
+          object-fit: cover;
+          margin-top: 10px;
+          border: 2px solid #e5e7eb;
+        }
+
         @media (max-width: 640px) {
           .card {
             padding: 40px 30px;
@@ -605,6 +630,19 @@ export default function RegisterPage() {
                     onChange={(e) => setSignupEmail(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">صورة الملف الشخصي (اختياري)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="photos-input"
+                  onChange={handleProfilePhotoChange}
+                />
+                {profilePhotoPreview && (
+                  <img src={profilePhotoPreview} alt="معاينة الصورة" className="profile-photo-preview" />
+                )}
               </div>
 
               <button className="primary-btn" onClick={handleNextStep}>

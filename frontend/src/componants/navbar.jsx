@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import KhidmahLogo from '../assets/Images/Logo.jpg';
+import * as dataService from '../services/dataService';
 
 export default function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +20,19 @@ export default function NavBar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setNotificationCount(0);
+      return;
+    }
+    const updateCount = () => {
+      setNotificationCount(dataService.getUnreadNotificationCount(user.id));
+    };
+    updateCount();
+    const interval = setInterval(updateCount, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -30,6 +46,17 @@ export default function NavBar() {
       navigate('/client-dashboard');
     }
   };
+
+  const handleNotificationsClick = () => {
+    if (!user) return;
+    if (user.role === 'worker') {
+      navigate('/worker-dashboard');
+    } else {
+      navigate('/client-dashboard');
+    }
+  };
+
+  const profileInitial = (user?.fullName || user?.email || 'U').charAt(0);
 
   return (
     <>
@@ -95,6 +122,13 @@ export default function NavBar() {
           cursor: pointer;
           transition: all 0.25s ease;
           font-weight: 700;
+        }
+
+        .profile-avatar-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         .profile-icon-button:hover {
@@ -225,6 +259,43 @@ export default function NavBar() {
           z-index: 1;
         }
 
+        .notification-button {
+          width: 40px;
+          height: 40px;
+          border-radius: 999px;
+          border: 1px solid #e5e7eb;
+          background: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #1f2937;
+          cursor: pointer;
+          position: relative;
+          transition: all 0.25s ease;
+        }
+
+        .notification-button:hover {
+          border-color: #3b82f6;
+          color: #3b82f6;
+        }
+
+        .notification-dot {
+          position: absolute;
+          top: -4px;
+          left: -4px;
+          background: #ef4444;
+          color: #ffffff;
+          border-radius: 999px;
+          min-width: 18px;
+          height: 18px;
+          font-size: 11px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 4px;
+          font-weight: 700;
+        }
+
         @media (max-width: 768px) {
           .navbar {
             padding: 15px 20px;
@@ -311,11 +382,24 @@ export default function NavBar() {
             <>
               <button
                 type="button"
+                className="notification-button"
+                onClick={handleNotificationsClick}
+                aria-label="الإشعارات"
+              >
+                <Bell size={18} />
+                {notificationCount > 0 && <span className="notification-dot">{notificationCount}</span>}
+              </button>
+              <button
+                type="button"
                 className="profile-icon-button"
                 onClick={handleProfileClick}
                 aria-label="الملف الشخصي"
               >
-                {(user?.fullName || user?.email || 'U').charAt(0)}
+                {user?.profilePhoto ? (
+                  <img src={user.profilePhoto} alt="صورة الحساب" className="profile-avatar-image" />
+                ) : (
+                  profileInitial
+                )}
               </button>
               <button type="button" className="nav-button nav-button-secondary" onClick={logout}>
                 تسجيل الخروج

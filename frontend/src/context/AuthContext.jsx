@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       availableHours: payload.availableHours || '',
       yearsExperience: payload.yearsExperience || 0,
       workPhotos: payload.workPhotos || payload.photos || [],
+      profilePhoto: payload.profilePhoto || null,
     });
 
     setUsers(dataService.getAllUsers());

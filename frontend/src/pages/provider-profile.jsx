@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
+import { detailedCategories } from '../data/serviceCategoriesData';
 import example1 from '../assets/Images/example1.jpeg';
 import example2 from '../assets/Images/example2.jpeg';
 import example3 from '../assets/Images/example3.jpeg';
@@ -89,11 +90,13 @@ export default function ServiceProviderProfile() {
     rating: providerSource?.rating || 4.8,
     reviewsCount: providerSource?.completedJobs || 125,
     profession: providerSource?.professionKey || providerSource?.profession || 'plumber',
+    professionKey: providerSource?.professionKey || providerSource?.profession || null,
     profession_ar: providerSource?.profession_ar || 'سباك',
     availableDays: providerSource?.availableDays || [],
     availableHours: providerSource?.availableHours || '',
     yearsExperience: providerSource?.yearsExperience || providerSource?.yearsExp || 5,
     workPhotos: providerSource?.workPhotos || providerSource?.photos || [],
+    profilePhoto: providerSource?.profilePhoto || null,
   };
 
   if (!providerSource) {
@@ -114,14 +117,23 @@ export default function ServiceProviderProfile() {
     saturday: 'السبت',
   };
 
-  const services = [
-    { icon: '🔧', label: 'إصلاح وصيانة المواسير' },
-    { icon: '💧', label: 'كشف تسربات المياه' },
-    { icon: '🔧', label: 'تأسيس شبكات السباكة' },
-    { icon: '🚽', label: 'تركيب الأدوات الصحية' },
-    { icon: '💧', label: 'تجديد سباكة الحمامات' },
-    { icon: '🔧', label: 'صيانة وتركيب السخانات' }
-  ];
+  const matchedCategory =
+    detailedCategories.find((category) => category.key === provider.profession || category.key === provider.professionKey) ||
+    detailedCategories.find((category) => category.title === provider.profession_ar);
+
+  const services = matchedCategory
+    ? matchedCategory.subServices.map((sub) => ({
+        label: sub.name,
+        features: sub.features,
+      }))
+    : [
+        { label: 'إصلاح وصيانة المواسير', features: [] },
+        { label: 'كشف تسربات المياه', features: [] },
+        { label: 'تأسيس شبكات السباكة', features: [] },
+        { label: 'تركيب الأدوات الصحية', features: [] },
+        { label: 'تجديد سباكة الحمامات', features: [] },
+        { label: 'صيانة وتركيب السخانات', features: [] },
+      ];
 
   const availability = provider.availableDays.length
     ? provider.availableDays.map((day) => ({
@@ -312,6 +324,13 @@ export default function ServiceProviderProfile() {
           font-weight: 700;
           box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
           animation: floating 3s ease-in-out infinite;
+        }
+
+        .avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         @keyframes floating {
@@ -659,23 +678,24 @@ export default function ServiceProviderProfile() {
         .service-card {
           background: white;
           border-radius: 16px;
-          padding: 24px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          text-align: center;
-          cursor: pointer;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-          transition: all 0.3s;
-          border: 2px solid transparent;
+          gap: 10px;
+          border: 1px solid #e5e7eb;
         }
 
-        .service-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
-          border-color: #3B82F6;
+        .service-name {
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .service-features {
+          margin: 0;
+          padding-right: 18px;
+          list-style: disc;
+          color: #6b7280;
+          font-size: 13px;
         }
 
         /* Modal */
@@ -807,7 +827,13 @@ export default function ServiceProviderProfile() {
               <section className="card">
                 <div className="profile-header">
                   <div className="avatar-wrapper">
-                    <div className="avatar">{provider.name.charAt(0)}</div>
+                    <div className="avatar">
+                      {provider.profilePhoto ? (
+                        <img src={provider.profilePhoto} alt={`صورة ${provider.name}`} />
+                      ) : (
+                        provider.name.charAt(0)
+                      )}
+                    </div>
                     <div className="verified-badge">
                       <span style={{ fontSize: '14px' }}>✓</span>
                     </div>
@@ -951,21 +977,20 @@ export default function ServiceProviderProfile() {
 
             <aside className="sidebar">
               <div className="card">
-              <h2 className="section-title">الخدمات المقدمة</h2>
-              <div className="services-grid">
-                {services.map(service => (
+                <h2 className="section-title">الخدمات المقدمة</h2>
+                <div className="services-grid">
+                  {services.map((service) => (
                     <div key={service.label} className="service-card">
-                    <span style={{ fontSize: '32px' }}>{service.icon}</span>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        lineHeight: 1.4, 
-                        color: '#1e293b', 
-                        fontWeight: 600 
-                      }}>
-                        {service.label}
-                      </span>
-                  </div>
-                ))}
+                      <span className="service-name">{service.label}</span>
+                      {service.features && service.features.length > 0 && (
+                        <ul className="service-features">
+                          {service.features.map((feature) => (
+                            <li key={feature}>{feature}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </aside>
