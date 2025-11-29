@@ -31,6 +31,7 @@ export default function RegisterPage() {
   const [availableDays, setAvailableDays] = useState([]);
   const [availableHours, setAvailableHours] = useState('');
   const [yearsExperience, setYearsExperience] = useState(1);
+  const [bio, setBio] = useState('');
   const [error, setError] = useState('');
   const { register: registerUser } = useAuth();
   const DAYS_OF_WEEK = [
@@ -74,7 +75,11 @@ export default function RegisterPage() {
         return false;
       }
       if (role === 'worker' && !availableHours.trim()) {
-        setError('الرجاء إدخال ساعات العمل المتاحة');
+        setError('الرجاء اختيار فترة العمل المتاحة');
+        return false;
+      }
+      if (role === 'worker' && !bio.trim()) {
+        setError('الرجاء كتابة نبذة قصيرة عن خبرتك وخدماتك');
         return false;
       }
     }
@@ -164,6 +169,7 @@ export default function RegisterPage() {
         yearsExperience: role === 'worker' ? Number(yearsExperience) : 0,
         workPhotos: role === 'worker' ? workPhotos : [],
         photos: role === 'worker' ? workPhotos : [],
+        bio: role === 'worker' ? bio.trim() : '',
       });
 
       if (role === 'worker') {
@@ -526,6 +532,11 @@ export default function RegisterPage() {
           box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
         }
 
+        .bio-textarea {
+          min-height: 80px;
+          resize: vertical;
+        }
+
         .photos-input {
           font-size: 13px;
           color: #4a5568;
@@ -722,7 +733,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 3 && (
+              {step === 3 && (
             <div>
               <div className="form-group">
                 <label className="form-label">المدينة</label>
@@ -801,13 +812,20 @@ export default function RegisterPage() {
 
                   <div className="form-group">
                     <label className="form-label">ساعات العمل</label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="مثال: من ٤ مساءً إلى ٩ مساءً"
+                    <select
+                      className="specialty-select"
                       value={availableHours}
                       onChange={(e) => setAvailableHours(e.target.value)}
-                    />
+                    >
+                      <option value="">اختر فترة العمل</option>
+                      <option value="صباحاً (من 9 ص إلى 12 م)">صباحاً (من 9 ص إلى 12 م)</option>
+                      <option value="عصراً (من 12 م إلى 5 م)">عصراً (من 12 م إلى 5 م)</option>
+                      <option value="مساءً (من 5 م إلى 10 م)">مساءً (من 5 م إلى 10 م)</option>
+                      <option value="طوال اليوم (مرن حسب الاتفاق)">طوال اليوم (مرن حسب الاتفاق)</option>
+                    </select>
+                    <p className="helper-text">
+                      يمكنك اختيار الفترة الأقرب لطبيعة عملك، وسيتم تنسيق المواعيد مع العميل لاحقاً.
+                    </p>
                   </div>
 
                   <div className="form-group">
@@ -820,6 +838,19 @@ export default function RegisterPage() {
                       value={yearsExperience}
                       onChange={(e) => setYearsExperience(e.target.value)}
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">نبذة عن خبرتك</label>
+                    <textarea
+                      className="input bio-textarea"
+                      placeholder="اكتب وصفاً مختصراً عن خبرتك، الخدمات التي تقدمها، وطريقتك في التعامل مع العملاء."
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                    />
+                    <p className="helper-text">
+                      مثال: كهربائي بخبرة ٨ سنوات في تركيبات المنازل والصيانة الدورية، ملتزم بالمواعيد والدقة في العمل.
+                    </p>
                   </div>
                 </>
               )}

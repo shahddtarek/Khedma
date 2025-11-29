@@ -61,11 +61,13 @@ export default function ServiceProviderProfile() {
     id: providerSource?.id,
     name: providerSource?.fullName || providerSource?.name || 'مزود خدمة',
     job: providerSource ? `${providerSource.profession_ar || 'حرفي'} محترف` : 'سباك خبير',
-    summary: providerSource
-      ? `خبرة أكثر من ${providerSource.yearsExperience || providerSource.yearsExp || 5} سنوات في أعمال ${
-          providerSource.profession_ar || 'الخدمات'
-        }. موثوق من خدمة.`
-      : 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.',
+    summary:
+      providerSource?.bio?.trim() ||
+      (providerSource
+        ? `خبرة أكثر من ${providerSource.yearsExperience || providerSource.yearsExp || 5} سنوات في أعمال ${
+            providerSource.profession_ar || 'الخدمات'
+          }. موثوق من خدمة.`
+        : 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.'),
     rating: providerSource?.rating || 4.8,
     reviewsCount: providerSource?.completedJobs || 125,
     profession: providerSource?.professionKey || providerSource?.profession || 'plumber',

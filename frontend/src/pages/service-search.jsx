@@ -124,20 +124,26 @@ export default function ServicesPage() {
 
   useEffect(() => {
     const workers = dataService.getAllWorkers();
-    const mapped = workers.map((worker) => ({
-      id: worker.id,
-      name: worker.fullName || worker.name || worker.email,
-      profession: worker.professionKey,
-      profession_ar: worker.profession_ar || 'حرفي',
-      distance: (Math.random() * 5 + 1).toFixed(1),
-      rating: worker.rating || 4.6,
-      status: 'available',
-      completedJobs: worker.completedJobs || 0,
-      yearsExp: worker.yearsExperience || 1,
-      photos: worker.workPhotos || worker.photos || [],
-      isRegistered: true,
-      profilePhoto: worker.profilePhoto || null,
-    }));
+    const mapped = workers.map((worker) => {
+      const ratingStats = dataService.getRatingStatsForUser?.(worker.id) || { average: 0 };
+      const jobs = dataService.getJobsForWorker?.(worker.id) || [];
+      const completedCount = jobs.filter((job) => job.status === 'completed').length;
+
+      return {
+        id: worker.id,
+        name: worker.fullName || worker.name || worker.email,
+        profession: worker.professionKey,
+        profession_ar: worker.profession_ar || 'حرفي',
+        distance: (Math.random() * 5 + 1).toFixed(1),
+        rating: ratingStats.average ? Number(ratingStats.average.toFixed(1)) : 0,
+        status: 'available',
+        completedJobs: completedCount,
+        yearsExp: worker.yearsExperience || 1,
+        photos: worker.workPhotos || worker.photos || [],
+        isRegistered: true,
+        profilePhoto: worker.profilePhoto || null,
+      };
+    });
     setRegisteredWorkers(mapped);
   }, []);
 
@@ -248,6 +254,7 @@ export default function ServicesPage() {
         .main-container {
           max-width: 1400px;
           margin: 0 auto;
+          animation: pageFadeIn 0.8s ease-out;
         }
 
         .header-section {
@@ -405,9 +412,21 @@ export default function ServicesPage() {
           overflow: hidden;
         }
 
+        .worker-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(1.02);
+          transition: transform 0.5s ease;
+        }
+
+        .worker-card:hover .worker-photo {
+          transform: scale(1.05);
+        }
+
         .placeholder-icon {
-          font-size: 64px;
-          opacity: 0.3;
+          font-size: 40px;
+          opacity: 0.4;
           animation: floatIcon 4s ease-in-out infinite alternate;
         }
 
@@ -439,6 +458,11 @@ export default function ServicesPage() {
 
         @keyframes workerFadeIn {
           0% { opacity: 0; transform: translateY(16px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pageFadeIn {
+          0% { opacity: 0; transform: translateY(12px); }
           100% { opacity: 1; transform: translateY(0); }
         }
 
@@ -727,7 +751,15 @@ export default function ServicesPage() {
               {filteredWorkers.map(worker => (
                 <div key={worker.id} className="worker-card">
                   <div className="card-image">
-                    <span className="placeholder-icon">👷</span>
+                    {worker.profilePhoto ? (
+                      <img
+                        src={worker.profilePhoto}
+                        alt={`صورة ${worker.name}`}
+                        className="worker-photo"
+                      />
+                    ) : (
+                      <span className="placeholder-icon">👷</span>
+                    )}
                     <span className={`status-badge ${worker.status === 'available' ? 'status-available' : 'status-busy'}`}>
                       {worker.status === 'available' ? '✓ متاح الآن' : '⏱ مشغول'}
                     </span>
