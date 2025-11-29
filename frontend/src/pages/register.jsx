@@ -26,8 +26,20 @@ export default function RegisterPage() {
   const [role, setRole] = useState('user'); // 'worker' | 'user'
   const [specialtyKey, setSpecialtyKey] = useState('electrician');
   const [workPhotos, setWorkPhotos] = useState([]);
+  const [availableDays, setAvailableDays] = useState([]);
+  const [availableHours, setAvailableHours] = useState('');
+  const [yearsExperience, setYearsExperience] = useState(1);
   const [error, setError] = useState('');
   const { register: registerUser } = useAuth();
+  const DAYS_OF_WEEK = [
+    { key: 'sunday', label: 'الأحد' },
+    { key: 'monday', label: 'الإثنين' },
+    { key: 'tuesday', label: 'الثلاثاء' },
+    { key: 'wednesday', label: 'الأربعاء' },
+    { key: 'thursday', label: 'الخميس' },
+    { key: 'friday', label: 'الجمعة' },
+    { key: 'saturday', label: 'السبت' },
+  ];
 
   const validateStep = () => {
     if (step === 1) {
@@ -53,6 +65,14 @@ export default function RegisterPage() {
       }
       if (role === 'worker' && !specialtyKey) {
         setError('الرجاء اختيار نوع الخدمة التي تقدمها');
+        return false;
+      }
+      if (role === 'worker' && availableDays.length === 0) {
+        setError('الرجاء اختيار أيام العمل المتاحة');
+        return false;
+      }
+      if (role === 'worker' && !availableHours.trim()) {
+        setError('الرجاء إدخال ساعات العمل المتاحة');
         return false;
       }
     }
@@ -82,16 +102,30 @@ export default function RegisterPage() {
     navigate('/login');
   };
 
-  const handlePhotosChange = (event) => {
+  const convertFileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (err) => reject(err);
+    });
+
+  const handlePhotosChange = async (event) => {
     const files = Array.from(event.target.files || []);
     const limited = files.slice(0, 5);
-    const mapped = limited.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      preview: URL.createObjectURL(file),
-    }));
-    setWorkPhotos(mapped);
+    try {
+      const base64Photos = await Promise.all(limited.map((file) => convertFileToBase64(file)));
+      setWorkPhotos(base64Photos);
+    } catch (photoError) {
+      console.error(photoError);
+      setError('حدث خطأ أثناء تحميل الصور');
+    }
+  };
+
+  const toggleDay = (dayKey) => {
+    setAvailableDays((prev) =>
+      prev.includes(dayKey) ? prev.filter((day) => day !== dayKey) : [...prev, dayKey],
+    );
   };
 
   const handleSubmit = async () => {
@@ -109,13 +143,17 @@ export default function RegisterPage() {
         role,
         professionKey: role === 'worker' ? specialtyKey : null,
         profession_ar: role === 'worker' ? selectedSpecialty?.label || null : null,
+        availableDays: role === 'worker' ? availableDays : [],
+        availableHours: role === 'worker' ? availableHours.trim() : '',
+        yearsExperience: role === 'worker' ? Number(yearsExperience) : 0,
+        workPhotos: role === 'worker' ? workPhotos : [],
         photos: role === 'worker' ? workPhotos : [],
       });
 
       if (role === 'worker') {
-        navigate('/service-search');
+        navigate('/worker-dashboard');
       } else {
-        navigate('/');
+        navigate('/client-dashboard');
       }
     } catch (err) {
       setError(err.message || 'حدث خطأ أثناء إنشاء الحساب');
@@ -446,6 +484,32 @@ export default function RegisterPage() {
           box-shadow: 0 0 0 4px rgba(77, 184, 216, 0.15);
         }
 
+        .days-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .day-chip {
+          flex: 1 1 30%;
+          min-width: 90px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 2px solid #e2e8f0;
+          background: #f7fafc;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .day-chip.active {
+          border-color: #3B82F6;
+          background: rgba(59, 130, 246, 0.1);
+          color: #0f172a;
+          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+        }
+
         .photos-input {
           font-size: 13px;
           color: #4a5568;
@@ -679,6 +743,45 @@ export default function RegisterPage() {
                     <p className="photos-hint">
                       يمكنك رفع حتى 5 صور لعرض نماذج من أعمالك للعملاء.
                     </p>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">أيام العمل المتاحة</label>
+                    <div className="days-grid">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <button
+                          key={day.key}
+                          type="button"
+                          className={`day-chip ${availableDays.includes(day.key) ? 'active' : ''}`}
+                          onClick={() => toggleDay(day.key)}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">ساعات العمل</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="مثال: من ٤ مساءً إلى ٩ مساءً"
+                      value={availableHours}
+                      onChange={(e) => setAvailableHours(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">سنوات الخبرة</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      className="input"
+                      value={yearsExperience}
+                      onChange={(e) => setYearsExperience(e.target.value)}
+                    />
                   </div>
                 </>
               )}

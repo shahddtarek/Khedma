@@ -31,6 +31,7 @@ function App() {
           <Route path="/service-categories" element={<Service />} />
           <Route path="/user-settings" element={<UserSettingsPage/>}/>
           <Route path="/provider-profile" element={<ServiceProviderProfile />} />
+          <Route path="/provider-profile/:workerId" element={<ServiceProviderProfile />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/service-search" element={<ServiceSearch />} />

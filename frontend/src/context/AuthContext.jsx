@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import * as dataService from '../services/dataService';
 
-const USERS_KEY = 'khedma.auth.users';
 const SESSION_KEY = 'khedma.auth.currentUser';
 
 const AuthContext = createContext(null);
@@ -40,18 +40,8 @@ const persistSession = (user, rememberMe = true) => {
   transientStore.removeItem(SESSION_KEY);
 };
 
-const persistUsers = (users) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
 export const AuthProvider = ({ children }) => {
-  const [users, setUsers] = useState(() => {
-    if (typeof window === 'undefined') return [];
-    return readStorage(USERS_KEY, [], window.localStorage);
-  });
+  const [users, setUsers] = useState(() => dataService.getAllUsers());
 
   const [user, setUser] = useState(() => {
     if (typeof window === 'undefined') return null;
@@ -65,27 +55,19 @@ export const AuthProvider = ({ children }) => {
       throw new Error('الرجاء إدخال جميع البيانات المطلوبة');
     }
 
-    const exists = users.some(
-      (existingUser) => existingUser.email.trim().toLowerCase() === normalizedEmail,
-    );
-
-    if (exists) {
-      throw new Error('هذا البريد الإلكتروني مستخدم بالفعل');
-    }
-
-    const newUser = {
+    const newUser = dataService.createUser({
       ...payload,
       email: normalizedEmail,
       role: payload.role || 'user',
       professionKey: payload.professionKey || null,
       profession_ar: payload.profession_ar || null,
-      photos: payload.photos || [],
-      createdAt: new Date().toISOString(),
-    };
+      availableDays: payload.availableDays || [],
+      availableHours: payload.availableHours || '',
+      yearsExperience: payload.yearsExperience || 0,
+      workPhotos: payload.workPhotos || payload.photos || [],
+    });
 
-    const nextUsers = [...users, newUser];
-    setUsers(nextUsers);
-    persistUsers(nextUsers);
+    setUsers(dataService.getAllUsers());
     persistSession(newUser);
     setUser(newUser);
     return newUser;
@@ -93,9 +75,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (email, password, options = { rememberMe: true }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const matched = users.find(
-      (existingUser) => existingUser.email.trim().toLowerCase() === normalizedEmail,
-    );
+    const matched = dataService.getUserByEmail(normalizedEmail);
 
     if (!matched || matched.password !== password.trim()) {
       throw new Error('بيانات تسجيل الدخول غير صحيحة');
@@ -113,13 +93,10 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (partial) => {
     if (!user) return;
-    const updated = { ...user, ...partial };
+    const updated = dataService.updateUser(user.id, partial);
+    if (!updated) return;
     setUser(updated);
-    const updatedUsers = users.map((u) =>
-      u.email.trim().toLowerCase() === updated.email.trim().toLowerCase() ? updated : u,
-    );
-    setUsers(updatedUsers);
-    persistUsers(updatedUsers);
+    setUsers(dataService.getAllUsers());
     persistSession(updated);
   };
 
@@ -133,7 +110,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateUser,
     }),
-    [user],
+    [user, users],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
