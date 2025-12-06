@@ -122,19 +122,9 @@ const CraftsmanCard = ({ craftsman, delay }) => {
             <div className="actions">
                 <button
                     className="btn btn-order"
-                    onClick={() =>
-                        navigate('/payment-method', {
-                            state: {
-                                provider: {
-                                    name: craftsman.name,
-                                    profession: craftsman.job,
-                                    profession_ar: craftsman.job,
-                                    rating: craftsman.rating,
-                                    reviews: craftsman.reviews,
-                                },
-                            },
-                        })
-                    }
+                    onClick={() => {
+                        alert('هذا المزود للعرض فقط. للطلب اختر مزوداً مسجلاً.');
+                    }}
                     type="button"
                 >
                     اطلب الآن

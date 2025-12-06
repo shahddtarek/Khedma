@@ -15,6 +15,8 @@ import {
   Wand2,
   Palette,
   Move,
+  Home,
+  Monitor,
 } from 'lucide-react';
 
 export const mainCategories = [
@@ -49,6 +51,22 @@ export const mainCategories = [
     color: '#f59e0b',
     bgGradient: 'from-amber-50 to-orange-50',
     description: 'دهانات احترافية بأعلى معايير الجودة',
+  },
+  {
+    key: 'home-appliances',
+    title: 'صيانة الأجهزة المنزلية',
+    icon: Home,
+    color: '#10b981',
+    bgGradient: 'from-emerald-50 to-teal-50',
+    description: 'صيانة شاملة للأجهزة المنزلية (غسالات، أفران، ثلاجات، مكيفات)',
+  },
+  {
+    key: 'electronics',
+    title: 'صيانة الإلكترونيات',
+    icon: Monitor,
+    color: '#6366f1',
+    bgGradient: 'from-indigo-50 to-purple-50',
+    description: 'صيانة متخصصة للأجهزة الإلكترونية (تلفزيونات، شاشات)',
   },
 ];
 
@@ -95,6 +113,28 @@ export const detailedCategories = [
       { name: 'دهان داخلي', icon: Palette, features: ['ألوان حديثة', 'تشطيب ناعم', 'بدون روائح'] },
       { name: 'دهان خارجي', icon: Paintbrush, features: ['مقاوم للعوامل', 'حماية طويلة', 'ألوان ثابتة'] },
       { name: 'رش دهانات', icon: Move, features: ['توزيع متساوي', 'سطح أملس', 'توفير الوقت'] },
+    ],
+  },
+  {
+    title: 'صيانة الأجهزة المنزلية',
+    color: '#10b981',
+    icon: Home,
+    key: 'home-appliances',
+    subServices: [
+      { name: 'صيانة غسالات', icon: Settings, features: ['فحص شامل', 'إصلاح الأعطال', 'ضمان على القطع'] },
+      { name: 'صيانة أفران ومواقد', icon: Settings, features: ['تنظيف احترافي', 'إصلاح الأعطال', 'فحص السلامة'] },
+      { name: 'صيانة ثلاجات', icon: Settings, features: ['فحص التبريد', 'إصلاح الأعطال', 'صيانة دورية'] },
+      { name: 'صيانة مكيفات', icon: Settings, features: ['تنظيف الفلاتر', 'إصلاح الأعطال', 'شحن الغاز'] },
+    ],
+  },
+  {
+    title: 'صيانة الإلكترونيات',
+    color: '#6366f1',
+    icon: Monitor,
+    key: 'electronics',
+    subServices: [
+      { name: 'صيانة تلفزيونات', icon: Monitor, features: ['تشخيص دقيق', 'إصلاح الأعطال', 'استبدال القطع'] },
+      { name: 'صيانة شاشات', icon: Monitor, features: ['إصلاح الشاشات', 'استبدال الأجزاء', 'معايرة الألوان'] },
     ],
   },
 ];

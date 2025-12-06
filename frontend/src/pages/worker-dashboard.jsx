@@ -19,6 +19,9 @@ export default function WorkerDashboard() {
   const [submittingJobId, setSubmittingJobId] = useState(null);
 
   useEffect(() => {
+    // Scroll to top on page load
+    window.scrollTo(0, 0);
+    
     if (user?.id) {
       refreshDashboard();
     }
@@ -139,11 +142,23 @@ export default function WorkerDashboard() {
 
   const pendingJobs = jobs.filter((job) => job.status === 'pending');
   const acceptedJobs = jobs.filter((job) => job.status === 'accepted');
+  const declinedJobs = jobs.filter((job) => job.status === 'declined');
   const completedJobs = jobs.filter((job) => job.status === 'completed');
+  const totalJobs = jobs.length;
   const earningsEstimate = acceptedJobs.length * 200 + completedJobs.length * 300;
+  const acceptanceRate = totalJobs > 0 
+    ? Math.round((acceptedJobs.length / (totalJobs - declinedJobs.length || 1)) * 100)
+    : 0;
+  const completionRate = acceptedJobs.length > 0
+    ? Math.round((completedJobs.length / acceptedJobs.length) * 100)
+    : 0;
   const rateableJobs = jobs.filter(
     (job) => (job.status === 'accepted' || job.status === 'completed') && job.clientId,
   );
+  
+  // Get average rating received
+  const ratingStats = dataService.getRatingStatsForUser?.(user?.id) || { average: 0, total: 0 };
+  const averageRating = ratingStats.average ? ratingStats.average.toFixed(1) : '0.0';
 
   const dayLabels = {
     sunday: 'أحد',
@@ -668,9 +683,9 @@ export default function WorkerDashboard() {
         <main className="main">
           <div className="cards-grid">
             <div className="stat-card">
-              <div className="stat-label">الجلسات الجاية</div>
-              <div className="stat-value">{acceptedJobs.length}</div>
-              <div className="stat-desc">مؤكدين خلال الأسبوع ده</div>
+              <div className="stat-label">إجمالي الطلبات</div>
+              <div className="stat-value">{totalJobs}</div>
+              <div className="stat-desc">جميع الطلبات المستلمة</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">الطلبات المعلقة</div>
@@ -678,7 +693,29 @@ export default function WorkerDashboard() {
               <div className="stat-desc">مستنية موافقتك</div>
             </div>
             <div className="stat-card">
-              <div className="stat-label">أرباح آخر ٧ أيام</div>
+              <div className="stat-label">الطلبات المقبولة</div>
+              <div className="stat-value">{acceptedJobs.length}</div>
+              <div className="stat-desc">قيد التنفيذ</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">الطلبات المكتملة</div>
+              <div className="stat-value">{completedJobs.length}</div>
+              <div className="stat-desc">تم إنجازها بنجاح</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">معدل القبول</div>
+              <div className="stat-value">{acceptanceRate}%</div>
+              <div className="stat-desc">من إجمالي الطلبات</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">التقييم المتوسط</div>
+              <div className="stat-value">
+                {averageRating} <span style={{ fontSize: '14px', color: '#fbbf24' }}>⭐</span>
+              </div>
+              <div className="stat-desc">{ratingStats.total || 0} تقييم</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">الأرباح المتوقعة</div>
               <div className="stat-value">
                 {earningsEstimate} <span className="earnings-currency">جنيه</span>
               </div>

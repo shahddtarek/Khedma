@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Wrench, Hammer, Paintbrush } from 'lucide-react';
+import { Zap, Wrench, Hammer, Paintbrush, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as dataService from '../services/dataService';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -113,14 +113,56 @@ export default function ServicesPage() {
   ].map((worker) => ({ ...worker, isRegistered: false }));
 
   const categories = [
-    { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff" },
-    { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3" },
-    { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe" },
-    { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe" },
-    { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe" },
-    { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5" },
-    { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7" }
+    { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff", bgGradient: "from-blue-50 to-sky-50" },
+    { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3", bgGradient: "from-yellow-50 to-amber-50" },
+    { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe", bgGradient: "from-cyan-50 to-sky-50" },
+    { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe", bgGradient: "from-purple-50 to-violet-50" },
+    { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
+    { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5", bgGradient: "from-orange-50 to-amber-50" },
+    { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7", bgGradient: "from-green-50 to-emerald-50" }
   ];
+
+  // دالة للتحقق من توفر العامل بناءً على ساعات العمل
+  const checkWorkerAvailability = (worker) => {
+    if (!worker.availableHours || !worker.availableDays || worker.availableDays.length === 0) {
+      return false;
+    }
+
+    const now = new Date();
+    const dayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDayKey = dayNames[dayIndex];
+    
+    // التحقق من أن اليوم الحالي ضمن أيام العمل المتاحة
+    if (!worker.availableDays.includes(currentDayKey)) {
+      return false;
+    }
+
+    // تحليل ساعات العمل (التنسيق: "9 AM - 5 PM")
+    const hoursMatch = worker.availableHours.match(/(\d+)\s+(AM|PM)\s*-\s*(\d+)\s+(AM|PM)/);
+    if (!hoursMatch) {
+      return true; // إذا لم يكن التنسيق صحيحاً، نعتبره متاحاً
+    }
+
+    const [, startHour, startPeriod, endHour, endPeriod] = hoursMatch;
+    let startTime = parseInt(startHour);
+    let endTime = parseInt(endHour);
+
+    // تحويل إلى 24 ساعة
+    if (startPeriod === 'PM' && startTime !== 12) startTime += 12;
+    if (startPeriod === 'AM' && startTime === 12) startTime = 0;
+    if (endPeriod === 'PM' && endTime !== 12) endTime += 12;
+    if (endPeriod === 'AM' && endTime === 12) endTime = 0;
+
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime24 = currentHour * 60 + currentMinute; // الوقت بالدقائق من بداية اليوم
+    const startTime24 = startTime * 60;
+    const endTime24 = endTime * 60;
+
+    // التحقق من أن الوقت الحالي ضمن نطاق ساعات العمل
+    return currentTime24 >= startTime24 && currentTime24 <= endTime24;
+  };
 
   useEffect(() => {
     const workers = dataService.getAllWorkers();
@@ -129,6 +171,8 @@ export default function ServicesPage() {
       const jobs = dataService.getJobsForWorker?.(worker.id) || [];
       const completedCount = jobs.filter((job) => job.status === 'completed').length;
 
+      const isAvailable = checkWorkerAvailability(worker);
+
       return {
         id: worker.id,
         name: worker.fullName || worker.name || worker.email,
@@ -136,12 +180,14 @@ export default function ServicesPage() {
         profession_ar: worker.profession_ar || 'حرفي',
         distance: (Math.random() * 5 + 1).toFixed(1),
         rating: ratingStats.average ? Number(ratingStats.average.toFixed(1)) : 0,
-        status: 'available',
+        status: isAvailable ? 'available' : 'busy',
         completedJobs: completedCount,
         yearsExp: worker.yearsExperience || 1,
         photos: worker.workPhotos || worker.photos || [],
         isRegistered: true,
         profilePhoto: worker.profilePhoto || null,
+        availableHours: worker.availableHours || '',
+        availableDays: worker.availableDays || [],
       };
     });
     setRegisteredWorkers(mapped);
@@ -232,6 +278,119 @@ export default function ServicesPage() {
     return matchesCategory && matchesSearch;
   });
 
+  // Categories Carousel Component
+  const CategoriesCarousel = ({ categories, selectedCategory, onCategorySelect }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [itemsPerView, setItemsPerView] = useState(4);
+    const carouselRef = useRef(null);
+    const trackRef = useRef(null);
+
+    useEffect(() => {
+      const updateItemsPerView = () => {
+        const width = window.innerWidth;
+        if (width < 640) {
+          setItemsPerView(2);
+        } else if (width < 1024) {
+          setItemsPerView(3);
+        } else {
+          setItemsPerView(4);
+        }
+      };
+
+      updateItemsPerView();
+      window.addEventListener('resize', updateItemsPerView);
+      return () => window.removeEventListener('resize', updateItemsPerView);
+    }, []);
+
+    // إعادة تعيين الفهرس عند تغيير عدد العناصر المعروضة
+    useEffect(() => {
+      setCurrentIndex(0);
+    }, [itemsPerView]);
+
+    // إذا كان عدد العناصر أقل من أو يساوي العناصر المعروضة، لا نحتاج للسلايدر
+    const needsCarousel = categories.length > itemsPerView;
+    const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
+    const canScrollPrev = needsCarousel && currentIndex > 0;
+    const canScrollNext = needsCarousel && currentIndex < maxIndex;
+
+    const scrollPrev = () => {
+      if (canScrollPrev) {
+        setCurrentIndex(prev => Math.max(0, prev - 1));
+      }
+    };
+
+    const scrollNext = () => {
+      if (canScrollNext) {
+        setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+      }
+    };
+
+    // حساب النسبة المئوية للتحريك بناءً على عدد العناصر المعروضة
+    const translateX = currentIndex * (100 / itemsPerView);
+
+    return (
+      <div className="carousel-container">
+        {needsCarousel && (
+          <button
+            className={`carousel-nav-btn carousel-nav-right ${!canScrollNext ? 'disabled' : ''}`}
+            onClick={scrollNext}
+            disabled={!canScrollNext}
+            aria-label="التالي"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
+        
+        <div className="carousel-wrapper" ref={carouselRef}>
+          <div
+            className="carousel-track"
+            ref={trackRef}
+            style={{
+              transform: needsCarousel ? `translateX(-${translateX}%)` : 'translateX(0)',
+            }}
+          >
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const isActive = selectedCategory === category.key;
+              return (
+                <div
+                  key={category.key}
+                  className={`carousel-category-card ${isActive ? 'active' : ''}`}
+                  onClick={() => onCategorySelect(category.key)}
+                >
+                  <div className={`carousel-category-inner bg-gradient-to-br ${category.bgGradient || ''}`}>
+                    <div className="carousel-category-top">
+                      <div
+                        className="carousel-category-icon-bg"
+                        style={{ backgroundColor: category.color }}
+                      >
+                        <Icon size={20} color="white" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <div className="carousel-category-content">
+                      <span className="carousel-category-name">{category.name}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {needsCarousel && (
+          <button
+            className={`carousel-nav-btn carousel-nav-left ${!canScrollPrev ? 'disabled' : ''}`}
+            onClick={scrollPrev}
+            disabled={!canScrollPrev}
+            aria-label="السابق"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="app-container">
       <style>{`
@@ -321,50 +480,153 @@ export default function ServicesPage() {
           text-align: center;
         }
 
-        .categories-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 16px;
-          max-width: 900px;
+        .carousel-container {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          max-width: 1000px;
           margin: 0 auto;
         }
 
-        .category-card {
-          border-radius: 20px;
-          padding: 16px 18px;
+        .carousel-wrapper {
+          flex: 1;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .carousel-track {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
+          gap: 12px;
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          will-change: transform;
+        }
+
+        .carousel-category-card {
+          flex: 0 0 calc((100% - (12px * 3)) / 4);
+          min-width: 0;
+          flex-shrink: 0;
           cursor: pointer;
-          border: 2px solid #e5e7eb;
-          background: white;
-          transition: all 0.25s ease;
         }
 
-        .category-card.active {
-          border-color: #3b82f6;
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
-        }
-
-        .category-main {
+        .carousel-category-inner {
+          position: relative;
+          border-radius: 16px;
+          padding: 16px 14px;
+          min-height: 140px;
           display: flex;
-          align-items: center;
-          gap: 10px;
+          flex-direction: column;
+          border: 2px solid rgba(255, 255, 255, 0.8);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
+          transition: all 0.3s ease;
         }
 
-        .category-icon-wrapper {
-          width: 40px;
-          height: 40px;
-          border-radius: 14px;
+        .carousel-category-inner:hover {
+          box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+          border-color: rgba(255, 255, 255, 1);
+          transform: translateY(-4px);
+        }
+
+        .carousel-category-card.active .carousel-category-inner {
+          box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+          border-color: #3B82F6;
+        }
+
+        .carousel-category-top {
+          margin-bottom: 12px;
+        }
+
+        .carousel-category-icon-bg {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .category-name {
-          font-weight: 600;
-          font-size: 15px;
-          color: #111827;
+        .carousel-category-card:hover .carousel-category-icon-bg {
+          box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.2);
+          transform: scale(1.05);
+        }
+
+        .carousel-category-content {
+          flex: 1;
+        }
+
+        .carousel-category-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1F2937;
+          display: block;
+          text-align: center;
+        }
+
+        .carousel-nav-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: white;
+          border: 2px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          flex-shrink: 0;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          z-index: 10;
+        }
+
+        .carousel-nav-btn:hover:not(.disabled) {
+          background: #3B82F6;
+          border-color: #3B82F6;
+          color: white;
+          transform: scale(1.1);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .carousel-nav-btn.disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .carousel-nav-btn:active:not(.disabled) {
+          transform: scale(0.95);
+        }
+
+        @media (max-width: 1024px) {
+          .carousel-category-card {
+            flex: 0 0 calc((100% - (12px * 2)) / 3);
+          }
+        }
+
+        @media (max-width: 640px) {
+          .carousel-category-card {
+            flex: 0 0 calc((100% - 12px) / 2);
+          }
+          
+          .carousel-category-inner {
+            min-height: 120px;
+            padding: 12px 10px;
+          }
+
+          .carousel-category-icon-bg {
+            width: 40px;
+            height: 40px;
+          }
+
+          .carousel-category-name {
+            font-size: 13px;
+          }
+
+          .carousel-nav-btn {
+            width: 36px;
+            height: 36px;
+          }
         }
 
         .results-section {
@@ -685,10 +947,6 @@ export default function ServicesPage() {
           .workers-grid {
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
           }
-          
-          .categories-grid {
-            gap: 8px;
-          }
         }
       `}</style>
 
@@ -712,31 +970,11 @@ export default function ServicesPage() {
         </header>
 
         <section className="categories-section">
-          <div className="categories-grid">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              const isActive = selectedCategory === category.key;
-              return (
-                <div
-                  key={category.key}
-                  className={`category-card ${isActive ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(category.key)}
-                  style={{ backgroundColor: category.bg }}
-                >
-                  <div className="category-main">
-                    <div
-                      className="category-icon-wrapper"
-                      style={{ backgroundColor: '#ffffff', color: category.color }}
-                    >
-                      <Icon size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="category-name">{category.name}</span>
-                  </div>
-                  <span style={{ color: category.color }}>●</span>
-                </div>
-              );
-            })}
-          </div>
+          <CategoriesCarousel 
+            categories={categories} 
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+          />
         </section>
 
         <section className="results-section">

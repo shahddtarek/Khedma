@@ -23,6 +23,16 @@ export default function ServiceProviderProfile() {
     phone: '',
     appointmentDate: '',
   });
+  
+  useEffect(() => {
+    if (user && modalOpen) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.fullName || user.name || prev.name,
+        phone: user.phoneNumber || user.phone || prev.phone,
+      }));
+    }
+  }, [user, modalOpen]);
   const [ratingSummary, setRatingSummary] = useState({
     average: 0,
     total: 0,
@@ -31,6 +41,9 @@ export default function ServiceProviderProfile() {
   });
 
   useEffect(() => {
+    // Scroll to top on page load
+    window.scrollTo(0, 0);
+    
     if (workerId) {
       const worker = dataService.getUserById(workerId);
       if (worker) {
@@ -154,14 +167,16 @@ export default function ServiceProviderProfile() {
 
 
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.serviceType || !formData.name || !formData.phone || !formData.appointmentDate) {
-      alert('برجاء ملء جميع الحقول المطلوبة');
+    if (!formData.description || !formData.appointmentDate) {
+      alert('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.');
       return;
     }
     if (!user) {
-      alert('يجب تسجيل الدخول أولاً لطلب خدمة');
+      alert('يرجى تسجيل الدخول لتقديم طلب خدمة.');
       return;
     }
     if (!provider.id) {
@@ -169,21 +184,28 @@ export default function ServiceProviderProfile() {
       return;
     }
 
-    dataService.createJob({
-      clientId: user.id,
-      clientName: user.fullName || user.name,
-      workerId: provider.id,
-      workerName: provider.name,
-      serviceName: formData.serviceType,
-      description: formData.description,
-      phone: formData.phone,
-      location: user.address || user.city || 'غير محدد',
-      appointmentDate: formData.appointmentDate,
-    });
+    setIsSubmitting(true);
+    try {
+      dataService.createJob({
+        clientId: user.id,
+        clientName: user.fullName || user.name || user.email,
+        workerId: provider.id,
+        workerName: provider.name,
+        serviceName: formData.serviceType || provider.profession_ar,
+        description: formData.description,
+        phone: formData.phone || user.phone || 'غير محدد',
+        location: user.address || user.city || 'غير محدد',
+        appointmentDate: formData.appointmentDate,
+      });
 
-    alert('تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
-    setModalOpen(false);
-    setFormData({ serviceType: '', description: '', name: '', phone: '', appointmentDate: '' });
+      alert('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.');
+      setModalOpen(false);
+      setFormData({ serviceType: '', description: '', name: '', phone: '', appointmentDate: '' });
+    } catch (error) {
+      alert(error.message || 'حدث خطأ أثناء إرسال الطلب');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -600,32 +622,94 @@ export default function ServiceProviderProfile() {
         }
 
         .services-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
         .service-card {
-          background: white;
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
           border-radius: 16px;
-          padding: 20px;
+          padding: 18px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          border: 1px solid #e5e7eb;
+          gap: 12px;
+          border: 2px solid #e5e7eb;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .service-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(135deg, #3b82f6, #38bdf8);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .service-card:hover {
+          border-color: #3b82f6;
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+          transform: translateX(-4px);
+        }
+
+        .service-card:hover::before {
+          opacity: 1;
         }
 
         .service-name {
           font-weight: 700;
           color: #1e293b;
+          font-size: 15px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .service-name::before {
+          content: '✓';
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6, #38bdf8);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 700;
+          flex-shrink: 0;
         }
 
         .service-features {
           margin: 0;
-          padding-right: 18px;
-          list-style: disc;
+          padding-right: 20px;
+          list-style: none;
           color: #6b7280;
           font-size: 13px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .service-features li {
+          position: relative;
+          padding-right: 16px;
+        }
+
+        .service-features li::before {
+          content: '•';
+          position: absolute;
+          right: 0;
+          color: #3b82f6;
+          font-weight: 700;
+          font-size: 16px;
         }
 
         .electric-services-list {
@@ -694,6 +778,108 @@ export default function ServiceProviderProfile() {
           color: #64748b;
           text-align: center;
           font-weight: 600;
+        }
+
+        /* Order Modal - Unified Style */
+        .order-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.58);
+          backdrop-filter: blur(4px);
+          z-index: 40;
+        }
+
+        .order-modal {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: min(520px, 92%);
+          background: #ffffff;
+          border-radius: 24px;
+          padding: 28px;
+          box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
+          z-index: 41;
+        }
+
+        .order-modal h3 {
+          font-size: 22px;
+          margin-bottom: 6px;
+          color: #1F2937;
+          font-weight: 700;
+        }
+
+        .order-modal p {
+          font-size: 14px;
+          color: #6b7280;
+          margin-bottom: 20px;
+        }
+
+        .order-form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-bottom: 14px;
+        }
+
+        .order-form-group label {
+          font-weight: 600;
+          font-size: 14px;
+          color: #0f172a;
+        }
+
+        .order-form-input {
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          padding: 10px 12px;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 14px;
+        }
+
+        .order-form-textarea {
+          min-height: 90px;
+          resize: vertical;
+        }
+
+        .order-modal-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 10px;
+        }
+
+        .order-submit-btn,
+        .order-cancel-btn {
+          flex: 1;
+          padding: 12px;
+          border-radius: 12px;
+          border: none;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: 'Tajawal', sans-serif;
+        }
+
+        .order-submit-btn {
+          background: linear-gradient(135deg, #3B82F6, #38BDF8);
+          color: white;
+        }
+
+        .order-submit-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .order-submit-btn:disabled {
+          opacity: 0.7;
+          cursor: progress;
+        }
+
+        .order-cancel-btn {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
+        .order-cancel-btn:hover {
+          background: #e2e8f0;
         }
 
         /* Modal */
@@ -1001,81 +1187,76 @@ export default function ServiceProviderProfile() {
         <>
           <div 
             onClick={() => setModalOpen(false)} 
-            className="modal-backdrop"
+            className="order-modal-backdrop"
           ></div>
-          <div className="modal">
-            <button 
-              onClick={() => setModalOpen(false)} 
-              className="modal-close"
-            >
-              ×
-            </button>
-            <h2 className="modal-title">طلب خدمة جديدة</h2>
-            <p style={{ 
-              fontSize: '15px', 
-              color: '#64748b', 
-              marginBottom: '32px' 
-            }}>
-              برجاء ملء البيانات التالية وسنتواصل معك في أقرب وقت.
-            </p>
+          <div className="order-modal">
+            <h3>طلب خدمة من {provider.name}</h3>
+            <p>سيتم إرسال تفاصيلك فوراً إلى المزود ليؤكد الموعد.</p>
             <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="label">نوع الخدمة المطلوبة</label>
+              <div className="order-form-group">
+                <label>نوع الخدمة</label>
                 <select 
+                  className="order-form-input"
                   value={formData.serviceType} 
                   onChange={e => setFormData({ ...formData, serviceType: e.target.value })} 
-                  className="input"
                 >
-                <option value="">-- اختر خدمة --</option>
+                  <option value="">-- اختر خدمة --</option>
                   {services.map(s => (
                     <option key={s.label} value={s.label}>
                       {s.label}
                     </option>
                   ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="label">وصف المشكلة</label>
-                <textarea 
+                </select>
+              </div>
+              <div className="order-form-group">
+                <label>وصف المشكلة</label>
+                <textarea
+                  className="order-form-input order-form-textarea"
                   value={formData.description} 
                   onChange={e => setFormData({ ...formData, description: e.target.value })} 
-                  rows={4} 
-                  placeholder="اشرح المشكلة بالتفصيل..." 
-                  className="input" 
-                  style={{ resize: 'vertical' }}
-                ></textarea>
-            </div>
-            <div className="form-group">
-              <label className="label">الاسم بالكامل</label>
+                  placeholder="اشرح احتياجك ليقدر المزود مدة وتكلفة الخدمة"
+                />
+              </div>
+              <div className="order-form-group">
+                <label>الاسم بالكامل</label>
                 <input 
                   type="text" 
+                  className="order-form-input"
                   value={formData.name} 
                   onChange={e => setFormData({ ...formData, name: e.target.value })} 
-                  className="input" 
                 />
-            </div>
-            <div className="form-group">
-              <label className="label">رقم الهاتف</label>
+              </div>
+              <div className="order-form-group">
+                <label>رقم الهاتف</label>
                 <input 
                   type="tel" 
+                  className="order-form-input"
                   value={formData.phone} 
                   onChange={e => setFormData({ ...formData, phone: e.target.value })} 
-                  className="input" 
+                  placeholder="رقم هاتفك لتأكيد الموعد"
                 />
-            </div>
-            <div className="form-group">
-              <label className="label">ميعاد الزيارة المتوقع</label>
+              </div>
+              <div className="order-form-group">
+                <label>ميعاد الزيارة</label>
                 <input 
                   type="datetime-local" 
+                  className="order-form-input"
                   value={formData.appointmentDate} 
                   onChange={e => setFormData({ ...formData, appointmentDate: e.target.value })} 
-                  className="input" 
                 />
-            </div>
-              <button type="submit" className="request-btn">
-              <span>✉️</span>
-              إرسال الطلب
-            </button>
+              </div>
+              <div className="order-modal-actions">
+                <button type="submit" className="order-submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'يتم الإرسال...' : 'تأكيد الطلب'}
+                </button>
+                <button 
+                  type="button" 
+                  className="order-cancel-btn" 
+                  onClick={() => setModalOpen(false)}
+                >
+                  إلغاء
+                </button>
+              </div>
             </form>
           </div>
         </>

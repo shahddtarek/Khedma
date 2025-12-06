@@ -8,6 +8,8 @@ const WORKER_SPECIALTIES = [
   { key: 'plumber', label: 'سباك' },
   { key: 'carpenter', label: 'نجار' },
   { key: 'painting', label: 'دهانات' },
+  { key: 'home-appliances', label: 'صيانة الأجهزة المنزلية' },
+  { key: 'electronics', label: 'صيانة الإلكترونيات' },
   { key: 'other', label: 'خدمة أخرى' },
 ];
 
@@ -29,7 +31,12 @@ export default function RegisterPage() {
   const [profilePhoto, setProfilePhoto] = useState('');
   const [profilePhotoPreview, setProfilePhotoPreview] = useState('');
   const [availableDays, setAvailableDays] = useState([]);
-  const [availableHours, setAvailableHours] = useState('');
+  const [availableHours, setAvailableHours] = useState({
+    startTime: '9',
+    startPeriod: 'AM',
+    endTime: '5',
+    endPeriod: 'PM',
+  });
   const [yearsExperience, setYearsExperience] = useState(1);
   const [bio, setBio] = useState('');
   const [error, setError] = useState('');
@@ -74,8 +81,8 @@ export default function RegisterPage() {
         setError('الرجاء اختيار أيام العمل المتاحة');
         return false;
       }
-      if (role === 'worker' && !availableHours.trim()) {
-        setError('الرجاء اختيار فترة العمل المتاحة');
+      if (role === 'worker' && (!availableHours.startTime || !availableHours.endTime)) {
+        setError('الرجاء تحديد ساعات العمل (وقت البداية والنهاية)');
         return false;
       }
       if (role === 'worker' && !bio.trim()) {
@@ -165,7 +172,9 @@ export default function RegisterPage() {
         professionKey: role === 'worker' ? specialtyKey : null,
         profession_ar: role === 'worker' ? selectedSpecialty?.label || null : null,
         availableDays: role === 'worker' ? availableDays : [],
-        availableHours: role === 'worker' ? availableHours.trim() : '',
+        availableHours: role === 'worker' 
+          ? `${availableHours.startTime} ${availableHours.startPeriod} - ${availableHours.endTime} ${availableHours.endPeriod}`
+          : '',
         yearsExperience: role === 'worker' ? Number(yearsExperience) : 0,
         workPhotos: role === 'worker' ? workPhotos : [],
         photos: role === 'worker' ? workPhotos : [],
@@ -557,6 +566,95 @@ export default function RegisterPage() {
           border: 2px solid #e5e7eb;
         }
 
+        .time-range-picker {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+          padding: 16px;
+          background: #f7fafc;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+        }
+
+        .time-range-picker:focus-within {
+          border-color: #3B82F6;
+          background: white;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .time-input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
+          min-width: 120px;
+        }
+
+        .time-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #4a5568;
+          text-align: right;
+        }
+
+        .time-selectors {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .time-select {
+          flex: 1;
+          padding: 12px 14px;
+          border: 2px solid #e2e8f0;
+          border-radius: 10px;
+          background: white;
+          font-family: "Tajawal", sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          color: #2d3748;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .time-select:focus {
+          outline: none;
+          border-color: #3B82F6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .period-select {
+          padding: 12px 16px;
+          border: 2px solid #e2e8f0;
+          border-radius: 10px;
+          background: white;
+          font-family: "Tajawal", sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          color: #2d3748;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          min-width: 60px;
+        }
+
+        .period-select:focus {
+          outline: none;
+          border-color: #3B82F6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .time-separator {
+          font-size: 16px;
+          font-weight: 700;
+          color: #3B82F6;
+          padding: 0 8px;
+          margin-top: 24px;
+        }
+
         @media (max-width: 640px) {
           .card {
             padding: 40px 30px;
@@ -568,6 +666,21 @@ export default function RegisterPage() {
 
           .button-group {
             flex-direction: column;
+          }
+
+          .time-range-picker {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .time-separator {
+            margin-top: 0;
+            text-align: center;
+            padding: 8px 0;
+          }
+
+          .time-input-group {
+            min-width: 100%;
           }
         }
       `}</style>
@@ -811,20 +924,60 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">ساعات العمل</label>
-                    <select
-                      className="specialty-select"
-                      value={availableHours}
-                      onChange={(e) => setAvailableHours(e.target.value)}
-                    >
-                      <option value="">اختر فترة العمل</option>
-                      <option value="صباحاً (من 9 ص إلى 12 م)">صباحاً (من 9 ص إلى 12 م)</option>
-                      <option value="عصراً (من 12 م إلى 5 م)">عصراً (من 12 م إلى 5 م)</option>
-                      <option value="مساءً (من 5 م إلى 10 م)">مساءً (من 5 م إلى 10 م)</option>
-                      <option value="طوال اليوم (مرن حسب الاتفاق)">طوال اليوم (مرن حسب الاتفاق)</option>
-                    </select>
+                    <label className="form-label">ساعات العمل المتاحة</label>
+                    <div className="time-range-picker">
+                      <div className="time-input-group">
+                        <label className="time-label">من</label>
+                        <div className="time-selectors">
+                          <select
+                            className="time-select"
+                            value={availableHours.startTime}
+                            onChange={(e) => setAvailableHours({ ...availableHours, startTime: e.target.value })}
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            className="period-select"
+                            value={availableHours.startPeriod}
+                            onChange={(e) => setAvailableHours({ ...availableHours, startPeriod: e.target.value })}
+                          >
+                            <option value="AM">ص</option>
+                            <option value="PM">م</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="time-separator">إلى</div>
+                      <div className="time-input-group">
+                        <label className="time-label">إلى</label>
+                        <div className="time-selectors">
+                          <select
+                            className="time-select"
+                            value={availableHours.endTime}
+                            onChange={(e) => setAvailableHours({ ...availableHours, endTime: e.target.value })}
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            className="period-select"
+                            value={availableHours.endPeriod}
+                            onChange={(e) => setAvailableHours({ ...availableHours, endPeriod: e.target.value })}
+                          >
+                            <option value="AM">ص</option>
+                            <option value="PM">م</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                     <p className="helper-text">
-                      يمكنك اختيار الفترة الأقرب لطبيعة عملك، وسيتم تنسيق المواعيد مع العميل لاحقاً.
+                      حدد وقت بداية ونهاية ساعات العمل المتاحة لك. سيتم عرض هذه المعلومات للعملاء.
                     </p>
                   </div>
 

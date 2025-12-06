@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Sparkles, 
   ArrowLeft,
-  Check
+  Check,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { mainCategories, detailedCategories } from '../data/serviceCategoriesData';
 
@@ -213,6 +215,109 @@ const ServiceSection = ({ title, subServices, color, icon: Icon, categoryKey }) 
 };
 
 // ------------------------------
+// Carousel Component
+// ------------------------------
+const CategoriesCarousel = ({ categories }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(3);
+  const carouselRef = useRef(null);
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    const updateItemsPerView = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setItemsPerView(1);
+      } else if (width < 1024) {
+        setItemsPerView(2);
+      } else {
+        setItemsPerView(3);
+      }
+    };
+
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
+
+  // إعادة تعيين الفهرس عند تغيير عدد العناصر المعروضة
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [itemsPerView]);
+
+  // إذا كان عدد العناصر أقل من أو يساوي العناصر المعروضة، لا نحتاج للسلايدر
+  const needsCarousel = categories.length > itemsPerView;
+  const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
+  const canScrollPrev = needsCarousel && currentIndex > 0;
+  const canScrollNext = needsCarousel && currentIndex < maxIndex;
+
+  const scrollPrev = () => {
+    if (canScrollPrev) {
+      setCurrentIndex(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const scrollNext = () => {
+    if (canScrollNext) {
+      setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+    }
+  };
+
+  // حساب النسبة المئوية للتحريك بناءً على عدد العناصر المعروضة
+  const translateX = currentIndex * (100 / itemsPerView);
+
+  return (
+    <div className="carousel-container">
+      {needsCarousel && (
+        <button
+          className={`carousel-nav-btn carousel-nav-right ${!canScrollNext ? 'disabled' : ''}`}
+          onClick={scrollNext}
+          disabled={!canScrollNext}
+          aria-label="التالي"
+        >
+          <ChevronRight size={24} />
+        </button>
+      )}
+      
+      <div className="carousel-wrapper" ref={carouselRef}>
+        <div
+          className="carousel-track"
+          ref={trackRef}
+          style={{
+            transform: needsCarousel ? `translateX(-${translateX}%)` : 'translateX(0)',
+          }}
+        >
+          {categories.map((cat, idx) => (
+            <div key={cat.key} className="carousel-item">
+              <CategoryCard
+                title={cat.title}
+                icon={cat.icon}
+                color={cat.color}
+                bgGradient={cat.bgGradient}
+                description={cat.description}
+                categoryKey={cat.key}
+                delay={idx * 0.08}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {needsCarousel && (
+        <button
+          className={`carousel-nav-btn carousel-nav-left ${!canScrollPrev ? 'disabled' : ''}`}
+          onClick={scrollPrev}
+          disabled={!canScrollPrev}
+          aria-label="السابق"
+        >
+          <ChevronLeft size={24} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ------------------------------
 // Main Component
 // ------------------------------
 export default function ServiceCategories() {
@@ -238,29 +343,16 @@ export default function ServiceCategories() {
             <span>خدماتنا المميزة</span>
           </motion.div>
           <h1 className="main-heading">
-            اختر من بين <span className="highlight">4 خدمات</span> منزلية متكاملة
+            اختر من بين <span className="highlight">6 خدمات</span> منزلية متكاملة
           </h1>
           <p className="main-subheading">
             نوفر لك أفضل الحلول المنزلية بجودة عالية وأسعار تنافسية
           </p>
         </motion.header>
 
-        {/* Categories Grid */}
+        {/* Categories Carousel */}
         <section className="categories-wrapper">
-          <div className="categories-grid">
-            {mainCategories.map((cat, idx) => (
-              <CategoryCard
-                key={cat.key}
-                title={cat.title}
-                icon={cat.icon}
-                color={cat.color}
-                bgGradient={cat.bgGradient}
-                description={cat.description}
-                categoryKey={cat.key}
-                delay={idx * 0.08}
-              />
-            ))}
-          </div>
+          <CategoriesCarousel categories={mainCategories} />
         </section>
 
         {/* Detailed Services */}
@@ -284,7 +376,15 @@ export default function ServiceCategories() {
                 subServices={cat.subServices}
                 color={cat.color}
                 icon={cat.icon}
-                categoryKey={cat.title === "الكهرباء" ? "electricity" : cat.title === "السباكة" ? "plumbing" : cat.title === "النجارة" ? "carpentry" : "painting"}
+                categoryKey={
+                  cat.title === "الكهرباء" ? "electricity" : 
+                  cat.title === "السباكة" ? "plumbing" : 
+                  cat.title === "النجارة" ? "carpentry" : 
+                  cat.title === "الدهانات" ? "painting" :
+                  cat.title === "صيانة الأجهزة المنزلية" ? "home-appliances" :
+                  cat.title === "صيانة الإلكترونيات" ? "electronics" :
+                  cat.key || "other"
+                }
               />
             ))}
           </div>
@@ -366,12 +466,83 @@ const styles = `
 /* Categories */
 .categories-wrapper {
   margin-bottom: 80px;
+  position: relative;
 }
 
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.carousel-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
   gap: 24px;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.carousel-item {
+  flex: 0 0 calc((100% - (24px * 2)) / 3);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.carousel-nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+}
+
+.carousel-nav-btn:hover:not(.disabled) {
+  background: #3B82F6;
+  border-color: #3B82F6;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.carousel-nav-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.carousel-nav-btn:active:not(.disabled) {
+  transform: scale(0.95);
+}
+
+@media (max-width: 1024px) {
+  .carousel-item {
+    flex: 0 0 calc((100% - 24px) / 2);
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-item {
+    flex: 0 0 100%;
+  }
+  
+  .carousel-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .category-card {

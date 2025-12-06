@@ -13,6 +13,9 @@ export default function ClientDashboard() {
   const [submittingJobId, setSubmittingJobId] = useState(null);
 
   useEffect(() => {
+    // Scroll to top on page load
+    window.scrollTo(0, 0);
+    
     if (user?.id) {
       refreshDashboard();
     }
@@ -40,8 +43,15 @@ export default function ClientDashboard() {
   const acceptedJobs = jobs.filter((job) => job.status === 'accepted');
   const declinedJobs = jobs.filter((job) => job.status === 'declined');
   const completedJobs = jobs.filter((job) => job.status === 'completed');
+  const totalJobs = jobs.length;
   const totalSpending = (acceptedJobs.length + completedJobs.length) * 250;
-  const nextAppointment = acceptedJobs[0];
+  const nextAppointment = acceptedJobs[0] || completedJobs[0];
+  const averageRating = jobs.length > 0 
+    ? (jobs.reduce((sum, job) => {
+        const rating = dataService.getRatingStatsForUser?.(job.workerId)?.average || 0;
+        return sum + rating;
+      }, 0) / jobs.length).toFixed(1)
+    : '0.0';
 
   const handleDraftChange = (jobId, field, value) => {
     setRatingDrafts((prev) => ({
@@ -589,6 +599,11 @@ export default function ClientDashboard() {
         <main className="main">
           <div className="cards-grid">
             <div className="stat-card">
+              <div className="stat-label">إجمالي الطلبات</div>
+              <div className="stat-value">{totalJobs}</div>
+              <div className="stat-sub">جميع الطلبات منذ البداية</div>
+            </div>
+            <div className="stat-card">
               <div className="stat-label">الطلبات المعلقة</div>
               <div className="stat-value">{pendingJobs.length}</div>
               <div className="stat-sub">في انتظار رد المزود</div>
@@ -597,6 +612,16 @@ export default function ClientDashboard() {
               <div className="stat-label">الطلبات المؤكدة</div>
               <div className="stat-value">{acceptedJobs.length}</div>
               <div className="stat-sub">قيد التنفيذ</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">الطلبات المكتملة</div>
+              <div className="stat-value">{completedJobs.length}</div>
+              <div className="stat-sub">تم إنجازها بنجاح</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">الطلبات المرفوضة</div>
+              <div className="stat-value">{declinedJobs.length}</div>
+              <div className="stat-sub">لم يتم قبولها</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">إجمالي الإنفاق</div>
@@ -643,7 +668,7 @@ export default function ClientDashboard() {
 
             <div className="panel">
               <div className="panel-header">
-                <span className="panel-title">موقعك وميعاد الزيارة الجاية</span>
+                <span className="panel-title">موقعك وميعاد الزيارة القادمة</span>
               </div>
               <div className="next-appointment">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -654,15 +679,29 @@ export default function ClientDashboard() {
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
                       <CalendarDays size={16} />
-                      {new Date(nextAppointment.createdAt).toLocaleDateString('ar-EG', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                      })}
+                      {nextAppointment.appointmentDate 
+                        ? new Date(nextAppointment.appointmentDate).toLocaleDateString('ar-EG', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : new Date(nextAppointment.createdAt).toLocaleDateString('ar-EG', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                          })}
                     </div>
                     <p style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
-                      المزود: {nextAppointment.workerName} • سنذكرك قبل الموعد بساعة.
+                      المزود: {nextAppointment.workerName} • {nextAppointment.serviceName || 'خدمة'}
                     </p>
+                    {nextAppointment.status === 'accepted' && (
+                      <p style={{ marginTop: 8, fontSize: 11, color: '#16a34a', fontWeight: 600 }}>
+                        ✓ سنذكرك قبل الموعد بساعة
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p style={{ marginTop: 12, color: '#6b7280', fontSize: 13 }}>لا توجد مواعيد مؤكدة حالياً.</p>
