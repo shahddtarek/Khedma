@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Heart, Activity, Sparkles, ArrowLeft } from 'lucide-react';
-// import meImage from '../assets/Images/electrical.webp';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const fallbackUser = {
@@ -20,17 +19,6 @@ const settingsItems = [
         description: "ينصح بالتغيير بشكل دوري للحفاظ على أمان حسابك."
     },
 ];
-
-const emptyStates = {
-    favorites: {
-        img: <Heart size={64} className="icon-large text-gray-300 mx-auto" />,
-        title: "لا توجد مفضلات حالياً",
-    },
-    activity: {
-        img: <Activity size={64} className="icon-large text-gray-300 mx-auto" />,
-        title: "لا توجد أنشطة حالياً",
-    }
-};
 
 const ProfileCard = ({ user }) => (
     <div className="profile-card">
@@ -283,7 +271,6 @@ const UserSettingsPage = () => {
             phone: user.phoneNumber || user.phone || fallbackUser.phone,
             city: user.city || fallbackUser.city,
             job: user.profession_ar || fallbackUser.job,
-            // Check profilePhoto (used in AuthContext) and fallback to image or empty string
             image: user.profilePhoto || user.image || user.photo || fallbackUser.image,
             role: user.role || 'user',
             profession_ar: user.profession_ar || null,
@@ -299,7 +286,6 @@ const UserSettingsPage = () => {
                 address: data.address,
                 phoneNumber: data.phone,
             });
-            // Immediate UI feedback
             alert('تم حفظ التغييرات بنجاح!');
         } catch (error) {
             console.error("Error saving user settings:", error);
@@ -311,8 +297,6 @@ const UserSettingsPage = () => {
 
     const handlePasswordChange = (oldPassword, newPassword, confirmPassword) => {
         if (!user) return;
-
-        // Validation logic
         if (user.password && user.password !== oldPassword) {
             alert('كلمة المرور القديمة غير صحيحة');
             return;
