@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Wrench, Hammer, Paintbrush, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Zap, Hammer, ChevronLeft, ChevronRight, Cog, PaintRoller, Fan, Cpu, Wrench  } from "lucide-react";
 import * as dataService from '../services/dataService';
 import { useAuth } from '../context/AuthContext.jsx';
 
-import { useModal } from '../context/ModalContext'; // Import useModal
+import { useModal } from '../context/ModalContext'; 
 
 export default function ServicesPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { showModal } = useModal(); // Destructure showModal
+    const { showModal } = useModal(); 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [registeredWorkers, setRegisteredWorkers] = useState([]);
@@ -93,54 +93,44 @@ export default function ServicesPage() {
     ].map((worker) => ({ ...worker, isRegistered: false }));
 
     const categories = [
-        { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff", bgGradient: "from-blue-50 to-sky-50" },
-        { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3", bgGradient: "from-yellow-50 to-amber-50" },
-        { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe", bgGradient: "from-cyan-50 to-sky-50" },
-        { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe", bgGradient: "from-purple-50 to-violet-50" },
-        { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
-        { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5", bgGradient: "from-orange-50 to-amber-50" },
-        { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7", bgGradient: "from-green-50 to-emerald-50" }
-    ];
+  { key: "all", name: "الكل", icon: Cog, color: "#2563eb", bg: "#eff6ff", bgGradient: "from-blue-50 to-sky-50" },
+  { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3", bgGradient: "from-yellow-50 to-amber-50" },
+  { key: "plumber", name: "السباكة", icon: Wrench, color: "#0284c7", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
+  { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe", bgGradient: "from-purple-50 to-violet-50" },
+  { key: "hvac", name: "فني تكييفات", icon: Fan, color: "#0ea5e9", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
+  { key: "naqash", name: "نقاشة", icon: PaintRoller, color: "#f97316", bg: "#ffedd5", bgGradient: "from-orange-50 to-amber-50" },
+  { key: "electronics", name: "فني إلكترونيات", icon: Cpu, color: "#16a34a", bg: "#dcfce7", bgGradient: "from-green-50 to-emerald-50" }
+];
 
-    // دالة للتحقق من توفر العامل بناءً على ساعات العمل
     const checkWorkerAvailability = (worker) => {
         if (!worker.availableHours || !worker.availableDays || worker.availableDays.length === 0) {
             return false;
         }
-
         const now = new Date();
-        const dayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const dayIndex = now.getDay(); 
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const currentDayKey = dayNames[dayIndex];
-
-        // التحقق من أن اليوم الحالي ضمن أيام العمل المتاحة
         if (!worker.availableDays.includes(currentDayKey)) {
             return false;
         }
-
-        // تحليل ساعات العمل (التنسيق: "9 AM - 5 PM")
         const hoursMatch = worker.availableHours.match(/(\d+)\s+(AM|PM)\s*-\s*(\d+)\s+(AM|PM)/);
         if (!hoursMatch) {
-            return true; // إذا لم يكن التنسيق صحيحاً، نعتبره متاحاً
+            return true; 
         }
 
         const [, startHour, startPeriod, endHour, endPeriod] = hoursMatch;
         let startTime = parseInt(startHour);
         let endTime = parseInt(endHour);
 
-        // تحويل إلى 24 ساعة
         if (startPeriod === 'PM' && startTime !== 12) startTime += 12;
         if (startPeriod === 'AM' && startTime === 12) startTime = 0;
         if (endPeriod === 'PM' && endTime !== 12) endTime += 12;
         if (endPeriod === 'AM' && endTime === 12) endTime = 0;
-
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
-        const currentTime24 = currentHour * 60 + currentMinute; // الوقت بالدقائق من بداية اليوم
+        const currentTime24 = currentHour * 60 + currentMinute; 
         const startTime24 = startTime * 60;
         const endTime24 = endTime * 60;
-
-        // التحقق من أن الوقت الحالي ضمن نطاق ساعات العمل
         return currentTime24 >= startTime24 && currentTime24 <= endTime24;
     };
 
@@ -241,7 +231,6 @@ export default function ServicesPage() {
         });
     };
 
-    // دالة لفتح صفحة الملف الشخصي
     const handleViewProfile = (worker) => {
         if (worker.id) {
             navigate(`/provider-profile/${worker.id}`, { state: { provider: worker } });
@@ -250,7 +239,6 @@ export default function ServicesPage() {
         }
     };
 
-    // تصفية البيانات
     const filteredWorkers = allWorkersData.filter(worker => {
         const matchesCategory = selectedCategory === 'all' || worker.profession === selectedCategory;
         const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -258,7 +246,6 @@ export default function ServicesPage() {
         return matchesCategory && matchesSearch;
     });
 
-    // Categories Carousel Component with RTL Support
     const CategoriesCarousel = ({ categories, selectedCategory, onCategorySelect }) => {
         const [currentIndex, setCurrentIndex] = useState(0);
         const [itemsPerView, setItemsPerView] = useState(4);
@@ -290,50 +277,27 @@ export default function ServicesPage() {
         const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
         const canScrollPrev = needsCarousel && currentIndex > 0;
         const canScrollNext = needsCarousel && currentIndex < maxIndex;
-
-        // RTL Logic:
-        // Items are laid out Right-to-Left (due to dir="rtl" on parent).
-        // [Item 1 (Rightmost)] [Item 2] [Item 3] ...
-        // To see "Next" items (which are to the Left), we must scroll the view to the Left?
-        // OR move the track to the Right (positive X)?
-        // Let's rely on standard index logic.
-        // Index 0: 0% translation.
-        // Index 1: Move 1 item width. In RTL, if we want to shift view to [Item 2], 
-        // we effectively move the Track to the RIGHT so Item 2 moves into the viewport slot 1?
-        // YES. In RTL, "next" items are on the left. To bring them into view (which starts at right), we translate the track positively (Right).
-        // User Requirement: "right arrow moves the carousel left", "left arrow moves it right".
-        // Left Arrow (<) -> Should show NEXT items (on the left). So it moves track RIGHT.
-        // Right Arrow (>) -> Should show PREV items (on the right). So it moves track LEFT.
-
-        const scrollNext = () => { // Move to Next items (Leftwards in layout)
+        const scrollNext = () => { 
             if (canScrollNext) {
                 setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
             }
         };
 
-        const scrollPrev = () => { // Move to Prev items (Rightwards in layout)
+        const scrollPrev = () => { 
             if (canScrollPrev) {
                 setCurrentIndex(prev => Math.max(0, prev - 1));
             }
         };
 
-        // Calculate translate X.
-        // For RTL, we want positive translation to move track Right (revealing left items).
         const translateX = currentIndex * (100 / itemsPerView);
-
         return (
             <div className="carousel-container">
                 {needsCarousel && (
-                    // Right Arrow Button (ChevronRight)
-                    // User: "right arrow moves the carousel left to reveal more items"
-                    // Wait, if it moves carousel LEFT (negative), it reveals items on the RIGHT.
-                    // This matches "Previous" in RTL.
-                    // So Right Arrow = Previous.
                     <button
                         className={`carousel-nav-btn carousel-nav-right ${!canScrollPrev ? 'disabled' : ''}`}
                         onClick={scrollPrev}
                         disabled={!canScrollPrev}
-                        aria-label="السابق (يمين)" // Previous (Right)
+                        aria-label="السابق (يمين)" 
                     >
                         <ChevronRight size={20} />
                     </button>
@@ -344,7 +308,6 @@ export default function ServicesPage() {
                         className="carousel-track"
                         ref={trackRef}
                         style={{
-                            // RTL: Positive translateX moves track to the Right, revealing items on the Left.
                             transform: needsCarousel ? `translateX(${translateX}%)` : 'translateX(0)',
                         }}
                     >
@@ -377,24 +340,11 @@ export default function ServicesPage() {
                 </div>
 
                 {needsCarousel && (
-                    // Left Arrow Button (ChevronLeft)
-                    // User: "left arrow moves it right to show previous items"
-                    // Wait. User text: "left arrow moves it right to show PREVIOUS items".
-                    // My logic above: Left arrow = Next.
-                    // Let's re-read CAREFULLY.
-                    // "right arrow moves the carousel left to reveal more items" (Move Left -> Reveal Right? No. Move Content Left -> Reveal content on Right? Yes.)
-                    // "left arrow moves it right to show previous items" (Move Content Right -> Reveal content on Left? Yes.)
-                    // IF "more items" are on the LEFT (standard RTL).
-                    // Then we need to move content RIGHT to see them.
-                    // This corresponds to "Left Arrow moves it Right".
-                    // So Left Arrow = Next (More Items).
-                    // Right Arrow = Prev.
-                    // Code below implements this.
                     <button
                         className={`carousel-nav-btn carousel-nav-left ${!canScrollNext ? 'disabled' : ''}`}
                         onClick={scrollNext}
                         disabled={!canScrollNext}
-                        aria-label="التالي (يسار)" // Next (Left)
+                        aria-label="التالي (يسار)" 
                     >
                         <ChevronLeft size={20} />
                     </button>
