@@ -8,16 +8,6 @@ import {
     Hammer,
     Wrench,
     Zap,
-    Clock,
-    Search,
-    Settings,
-    Waves,
-    AlertCircle,
-    DoorOpen,
-    Armchair,
-    Wand2,
-    Palette,
-    Move,
     ArrowLeft,
     Check,
     Mail,
@@ -30,45 +20,6 @@ import {
     Star,
     Phone
 } from 'lucide-react';
-import Himg from '../assets/Images/H.jpg';
-import Cimg from '../assets/Images/c.jpg';
-
-// بيانات وهمية لنتائج البحث
-const CRAFTSMEN_DATA = [
-    {
-        name: "بدر حسن",
-        job: "كهربائي",
-        rating: 4.8,
-        reviews: 25,
-        imgSrc: Himg,
-        status: "مميز"
-    },
-    {
-        name: "خالد علي",
-        job: "سباك",
-        rating: 4.8,
-        reviews: 18,
-        imgSrc: Himg,
-        status: "مميز"
-    },
-    {
-        name: "يوسف محمود",
-        job: "نجار",
-        rating: 4.8,
-        reviews: 30,
-        imgSrc: Himg,
-        status: "مميز"
-    },
-    {
-        name: "محمد إبراهيم",
-        job: "مهندس تكيفات",
-        rating: 4.8,
-        reviews: 42,
-        imgSrc: Himg,
-        status: "مميز"
-    },
-];
-
 const SERVICES_DATA = [
     { icon: Zap, title: "الكهرباء", color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
     { icon: Hammer, title: "النجارة", color: "#eab308", bgGradient: "from-yellow-50 to-amber-50" },
@@ -77,65 +28,8 @@ const SERVICES_DATA = [
     { icon: Wrench, title: "السباكة", color: "#8b5cf6", bgGradient: "from-purple-50 to-violet-50" },
 ];
 
-const CraftsmanCard = ({ craftsman, delay }) => {
-    const navigate = useNavigate();
 
-    const renderStars = (rating) => {
-        const fullStars = Math.floor(rating);
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <Star
-                    key={i}
-                    size={16}
-                    fill={i < fullStars ? '#FFC107' : '#E0E0E0'}
-                    strokeWidth={i < fullStars ? 0 : 1.5}
-                    color={i < fullStars ? '#FFC107' : '#999'}
-                />
-            );
-        }
-        return stars;
-    };
 
-    return (
-        <div className="craftsman-card" style={{ animationDelay: `${delay}ms` }}>
-            {craftsman.status && (
-                <span className="status-tag">{craftsman.status}</span>
-            )}
-            <img src={craftsman.imgSrc} alt={craftsman.name} className="craftsman-image" />
-
-            <h3 className="craftsman-name">{craftsman.name}</h3>
-            <p className="craftsman-job">{craftsman.job}</p>
-
-            <div className="rating">
-                <span className="rating-value">{craftsman.rating}</span>
-                <div className="star-icons">{renderStars(craftsman.rating)}</div>
-                <span className="reviews-count">({craftsman.reviews})</span>
-            </div>
-
-            <div className="actions">
-                <button
-                    className="btn btn-order"
-                    onClick={() => {
-                        alert('هذا المزود للعرض فقط. للطلب اختر مزوداً مسجلاً.');
-                    }}
-                    type="button"
-                >
-                    اطلب الآن
-                </button>
-                <button
-                    className="btn btn-primary btn-profile"
-                    onClick={() => navigate('/provider-profile', { state: { provider: craftsman } })}
-                    type="button"
-                >
-                    ملف شخصي
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// مكون قسم الخدمات
 const ServicesSection = () => (
     <section className="services-section">
         <div className="detailed-wrapper">
@@ -283,7 +177,6 @@ const TestimonialsSection = () => {
                 </div>
 
                 <div className="testimonial-slider-container">
-                    {/* Background decorations */}
                     <div className="blob blob-1"></div>
                     <div className="blob blob-2"></div>
 
@@ -585,25 +478,7 @@ const HomePage = () => {
                     color: #6B7280;
                 }
 
-                /* Craftsmen Grid */
-                .craftsmen-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 24px;
-                }
 
-                .craftsman-card {
-                    background: #F9FAFB;
-                    border: 2px solid #E5E7EB;
-                    border-radius: 24px;
-                    padding: 32px 24px;
-                    text-align: center;
-                    position: relative;
-                    transition: all 0.3s ease;
-                    animation: fadeInUp 0.6s ease forwards;
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
 
                 @keyframes fadeInUp {
                     to {
@@ -612,68 +487,6 @@ const HomePage = () => {
                     }
                 }
 
-                .craftsman-card:hover {
-                    border-color: #3B82F6;
-                    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
-                    transform: translateY(-4px);
-                }
-
-                .status-tag {
-                    position: absolute;
-                    top: 16px;
-                    left: 16px;
-                    background: linear-gradient(135deg, #3B82F6, #38BDF8);
-                    color: white;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-size: 12px;
-                    font-weight: 600;
-                }
-
-                .craftsman-image {
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    margin-bottom: 16px;
-                    border: 3px solid #E5E7EB;
-                }
-
-                .craftsman-name {
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: #1F2937;
-                    margin-bottom: 8px;
-                }
-
-                .craftsman-job {
-                    font-size: 14px;
-                    color: #6B7280;
-                    margin-bottom: 16px;
-                }
-
-                .rating {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    margin-bottom: 20px;
-                }
-
-                .rating-value {
-                    font-weight: 700;
-                    color: #1F2937;
-                }
-
-                .star-icons {
-                    display: flex;
-                    gap: 2px;
-                }
-
-                .reviews-count {
-                    font-size: 14px;
-                    color: #6B7280;
-                }
 
                 .actions {
                     display: flex;
@@ -1247,10 +1060,6 @@ const HomePage = () => {
 
                     .testimonial-content {
                         flex-direction: column;
-                    }
-
-                    .craftsmen-grid {
-                        grid-template-columns: 1fr;
                     }
 
                     .services-grid {
