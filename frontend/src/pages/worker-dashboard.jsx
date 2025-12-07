@@ -8,8 +8,11 @@ const getJobStatusMeta = (status) =>
     ? { label: 'قيد التنفيذ', color: '#1d4ed8' }
     : { label: 'مكتمل', color: '#16a34a' };
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 export default function WorkerDashboard() {
   const { user } = useAuth();
+  const { showModal } = useModal(); // Destructure showModal
   const displayName = user?.fullName || user?.name || 'مزود خدمة';
   const profession = user?.profession_ar || 'حرفي';
   const [jobs, setJobs] = useState([]);
@@ -21,7 +24,7 @@ export default function WorkerDashboard() {
   useEffect(() => {
     // Scroll to top on page load
     window.scrollTo(0, 0);
-    
+
     if (user?.id) {
       refreshDashboard();
     }
@@ -62,13 +65,13 @@ export default function WorkerDashboard() {
 
   const handleRatingSubmit = (job) => {
     if (!job.clientId) {
-      alert('لا يمكن تحديد العميل لهذا الطلب');
+      showModal('لا يمكن تحديد العميل لهذا الطلب', 'خطأ', 'error');
       return;
     }
 
     const draft = ratingDrafts[job.id];
     if (!draft?.score) {
-      alert('اختر تقييم من 1 إلى 5 نجوم');
+      showModal('اختر تقييم من 1 إلى 5 نجوم', 'تنبيه', 'info');
       return;
     }
 
@@ -88,7 +91,7 @@ export default function WorkerDashboard() {
         [job.id]: { score: '', comment: '' },
       }));
     } catch (error) {
-      alert(error.message || 'حدث خطأ أثناء إرسال التقييم');
+      showModal(error.message || 'حدث خطأ أثناء إرسال التقييم', 'خطأ', 'error');
     } finally {
       setSubmittingJobId(null);
     }
@@ -146,7 +149,7 @@ export default function WorkerDashboard() {
   const completedJobs = jobs.filter((job) => job.status === 'completed');
   const totalJobs = jobs.length;
   const earningsEstimate = acceptedJobs.length * 200 + completedJobs.length * 300;
-  const acceptanceRate = totalJobs > 0 
+  const acceptanceRate = totalJobs > 0
     ? Math.round((acceptedJobs.length / (totalJobs - declinedJobs.length || 1)) * 100)
     : 0;
   const completionRate = acceptedJobs.length > 0
@@ -155,7 +158,7 @@ export default function WorkerDashboard() {
   const rateableJobs = jobs.filter(
     (job) => (job.status === 'accepted' || job.status === 'completed') && job.clientId,
   );
-  
+
   // Get average rating received
   const ratingStats = dataService.getRatingStatsForUser?.(user?.id) || { average: 0, total: 0 };
   const averageRating = ratingStats.average ? ratingStats.average.toFixed(1) : '0.0';
@@ -845,11 +848,11 @@ export default function WorkerDashboard() {
                   const isActive =
                     user?.availableDays?.length > 0
                       ? user.availableDays.some(
-                          (availableDay) =>
-                            ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(
-                              availableDay,
-                            ) === (day % 7),
-                        )
+                        (availableDay) =>
+                          ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(
+                            availableDay,
+                          ) === (day % 7),
+                      )
                       : false;
                   return (
                     <div

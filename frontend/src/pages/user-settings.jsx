@@ -261,8 +261,11 @@ const AccountSettingsList = ({ onOpenModal }) => (
     </section>
 );
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 const UserSettingsPage = () => {
     const { user, updateUser } = useAuth();
+    const { showModal } = useModal(); // Destructure showModal
     const mergedUser = user
         ? {
             name: user.fullName || user.name || fallbackUser.name,
@@ -286,10 +289,10 @@ const UserSettingsPage = () => {
                 address: data.address,
                 phoneNumber: data.phone,
             });
-            alert('تم حفظ التغييرات بنجاح!');
+            showModal('تم حفظ التغييرات بنجاح!', 'تم بنجاح', 'success');
         } catch (error) {
             console.error("Error saving user settings:", error);
-            alert('حدث خطأ أثناء حفظ التغييرات.');
+            showModal('حدث خطأ أثناء حفظ التغييرات.', 'خطأ', 'error');
         }
     };
 
@@ -298,27 +301,27 @@ const UserSettingsPage = () => {
     const handlePasswordChange = (oldPassword, newPassword, confirmPassword) => {
         if (!user) return;
         if (user.password && user.password !== oldPassword) {
-            alert('كلمة المرور القديمة غير صحيحة');
+            showModal('كلمة المرور القديمة غير صحيحة', 'خطأ', 'error');
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            alert('كلمة المرور الجديدة وتأكيدها غير متطابقين');
+            showModal('كلمة المرور الجديدة وتأكيدها غير متطابقين', 'خطأ', 'error');
             return;
         }
 
         if (newPassword.length < 6) {
-            alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+            showModal('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'تنبيه', 'info');
             return;
         }
 
         try {
             updateUser({ password: newPassword });
-            alert('تم تغيير كلمة المرور بنجاح');
+            showModal('تم تغيير كلمة المرور بنجاح', 'تم بنجاح', 'success');
             setIsPasswordModalOpen(false);
         } catch (error) {
             console.error(error);
-            alert('حدث خطأ أثناء تغيير كلمة المرور');
+            showModal('حدث خطأ أثناء تغيير كلمة المرور', 'خطأ', 'error');
         }
     };
 

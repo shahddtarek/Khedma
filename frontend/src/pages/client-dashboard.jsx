@@ -3,8 +3,11 @@ import { CalendarDays, Heart, MapPin, Wallet, Bell, CheckCircle2, XCircle, Clock
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 export default function ClientDashboard() {
   const { user } = useAuth();
+  const { showModal } = useModal(); // Destructure showModal
   const displayName = user?.fullName || user?.name || 'عميل خدمة';
   const [jobs, setJobs] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -15,7 +18,7 @@ export default function ClientDashboard() {
   useEffect(() => {
 
     window.scrollTo(0, 0);
-    
+
     if (user?.id) {
       refreshDashboard();
     }
@@ -46,11 +49,11 @@ export default function ClientDashboard() {
   const totalJobs = jobs.length;
   const totalSpending = (acceptedJobs.length + completedJobs.length) * 250;
   const nextAppointment = acceptedJobs[0] || completedJobs[0];
-  const averageRating = jobs.length > 0 
+  const averageRating = jobs.length > 0
     ? (jobs.reduce((sum, job) => {
-        const rating = dataService.getRatingStatsForUser?.(job.workerId)?.average || 0;
-        return sum + rating;
-      }, 0) / jobs.length).toFixed(1)
+      const rating = dataService.getRatingStatsForUser?.(job.workerId)?.average || 0;
+      return sum + rating;
+    }, 0) / jobs.length).toFixed(1)
     : '0.0';
 
   const handleDraftChange = (jobId, field, value) => {
@@ -66,7 +69,7 @@ export default function ClientDashboard() {
   const handleRatingSubmit = (job) => {
     const draft = ratingDrafts[job.id];
     if (!draft?.score) {
-      alert('اختر تقييم من 1 إلى 5 نجوم');
+      showModal('اختر تقييم من 1 إلى 5 نجوم', 'تنبيه', 'info');
       return;
     }
     setSubmittingJobId(job.id);
@@ -85,7 +88,7 @@ export default function ClientDashboard() {
         [job.id]: { score: '', comment: '' },
       }));
     } catch (error) {
-      alert(error.message || 'حدث خطأ أثناء إرسال التقييم');
+      showModal(error.message || 'حدث خطأ أثناء إرسال التقييم', 'خطأ', 'error');
     } finally {
       setSubmittingJobId(null);
     }
@@ -665,20 +668,20 @@ export default function ClientDashboard() {
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
                       <CalendarDays size={16} />
-                      {nextAppointment.appointmentDate 
+                      {nextAppointment.appointmentDate
                         ? new Date(nextAppointment.appointmentDate).toLocaleDateString('ar-EG', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                         : new Date(nextAppointment.createdAt).toLocaleDateString('ar-EG', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                          })}
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                        })}
                     </div>
                     <p style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
                       المزود: {nextAppointment.workerName} • {nextAppointment.serviceName || 'خدمة'}

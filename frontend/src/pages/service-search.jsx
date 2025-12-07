@@ -4,405 +4,408 @@ import { Zap, Wrench, Hammer, Paintbrush, ChevronLeft, ChevronRight } from 'luci
 import * as dataService from '../services/dataService';
 import { useAuth } from '../context/AuthContext.jsx';
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 export default function ServicesPage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [registeredWorkers, setRegisteredWorkers] = useState([]);
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [selectedWorker, setSelectedWorker] = useState(null);
-  const [orderForm, setOrderForm] = useState({
-    serviceName: '',
-    description: '',
-    appointmentDate: '',
-    phone: '',
-  });
-  const [orderSubmitting, setOrderSubmitting] = useState(false);
-
-  const staticWorkers = [
-    {
-      id: 2,
-      name: "يوسف محمود",
-      profession: "carpenter",
-      profession_ar: "نجار",
-      distance: 5.3,
-      rating: 4.7,
-      status: "available",
-      completedJobs: 203,
-      yearsExp: 12
-    },
-    {
-      id: 3,
-      name: "خالد علي",
-      profession: "plumber",
-      profession_ar: "سباك",
-      distance: 3.1,
-      rating: 4.5,
-      status: "busy",
-      completedJobs: 89,
-      yearsExp: 5
-    },
-    {
-      id: 4,
-      name: "عمر حسن",
-      profession: "electrician",
-      profession_ar: "كهربائي",
-      distance: 2.4,
-      rating: 4.8,
-      status: "available",
-      completedJobs: 178,
-      yearsExp: 10
-    },
-    {
-      id: 6,
-      name: "محمد عبدالله",
-      profession: "electronics",
-      profession_ar: "فني إلكترونيات",
-      distance: 6.2,
-      rating: 4.4,
-      status: "available",
-      completedJobs: 92,
-      yearsExp: 6
-    },
-    {
-      id: 7,
-      name: "حسن إبراهيم",
-      profession: "carpenter",
-      profession_ar: "نجار",
-      distance: 3.7,
-      rating: 4.9,
-      status: "busy",
-      completedJobs: 245,
-      yearsExp: 15
-    },
-    {
-      id: 8,
-      name: "سعيد أحمد",
-      profession: "plumber",
-      profession_ar: "سباك",
-      distance: 2.1,
-      rating: 4.7,
-      status: "available",
-      completedJobs: 167,
-      yearsExp: 9
-    }
-  ].map((worker) => ({ ...worker, isRegistered: false }));
-
-  const categories = [
-    { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff", bgGradient: "from-blue-50 to-sky-50" },
-    { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3", bgGradient: "from-yellow-50 to-amber-50" },
-    { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe", bgGradient: "from-cyan-50 to-sky-50" },
-    { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe", bgGradient: "from-purple-50 to-violet-50" },
-    { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
-    { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5", bgGradient: "from-orange-50 to-amber-50" },
-    { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7", bgGradient: "from-green-50 to-emerald-50" }
-  ];
-
-  // دالة للتحقق من توفر العامل بناءً على ساعات العمل
-  const checkWorkerAvailability = (worker) => {
-    if (!worker.availableHours || !worker.availableDays || worker.availableDays.length === 0) {
-      return false;
-    }
-
-    const now = new Date();
-    const dayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const currentDayKey = dayNames[dayIndex];
-
-    // التحقق من أن اليوم الحالي ضمن أيام العمل المتاحة
-    if (!worker.availableDays.includes(currentDayKey)) {
-      return false;
-    }
-
-    // تحليل ساعات العمل (التنسيق: "9 AM - 5 PM")
-    const hoursMatch = worker.availableHours.match(/(\d+)\s+(AM|PM)\s*-\s*(\d+)\s+(AM|PM)/);
-    if (!hoursMatch) {
-      return true; // إذا لم يكن التنسيق صحيحاً، نعتبره متاحاً
-    }
-
-    const [, startHour, startPeriod, endHour, endPeriod] = hoursMatch;
-    let startTime = parseInt(startHour);
-    let endTime = parseInt(endHour);
-
-    // تحويل إلى 24 ساعة
-    if (startPeriod === 'PM' && startTime !== 12) startTime += 12;
-    if (startPeriod === 'AM' && startTime === 12) startTime = 0;
-    if (endPeriod === 'PM' && endTime !== 12) endTime += 12;
-    if (endPeriod === 'AM' && endTime === 12) endTime = 0;
-
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime24 = currentHour * 60 + currentMinute; // الوقت بالدقائق من بداية اليوم
-    const startTime24 = startTime * 60;
-    const endTime24 = endTime * 60;
-
-    // التحقق من أن الوقت الحالي ضمن نطاق ساعات العمل
-    return currentTime24 >= startTime24 && currentTime24 <= endTime24;
-  };
-
-  useEffect(() => {
-    const workers = dataService.getAllWorkers();
-    const mapped = workers.map((worker) => {
-      const ratingStats = dataService.getRatingStatsForUser?.(worker.id) || { average: 0 };
-      const jobs = dataService.getJobsForWorker?.(worker.id) || [];
-      const completedCount = jobs.filter((job) => job.status === 'completed').length;
-
-      const isAvailable = checkWorkerAvailability(worker);
-
-      return {
-        id: worker.id,
-        name: worker.fullName || worker.name || worker.email,
-        profession: worker.professionKey,
-        profession_ar: worker.profession_ar || 'حرفي',
-        distance: (Math.random() * 5 + 1).toFixed(1),
-        rating: ratingStats.average ? Number(ratingStats.average.toFixed(1)) : 0,
-        status: isAvailable ? 'available' : 'busy',
-        completedJobs: completedCount,
-        yearsExp: worker.yearsExperience || 1,
-        photos: worker.workPhotos || worker.photos || [],
-        isRegistered: true,
-        profilePhoto: worker.profilePhoto || null,
-        availableHours: worker.availableHours || '',
-        availableDays: worker.availableDays || [],
-      };
-    });
-    setRegisteredWorkers(mapped);
-  }, []);
-
-  const allWorkersData = [...staticWorkers, ...registeredWorkers];
-
-  const handleOrderNow = (worker) => {
-    if (!user) {
-      alert('يرجى تسجيل الدخول لتقديم طلب خدمة.');
-      return;
-    }
-    if (!worker?.isRegistered) {
-      alert('هذا المزود للعرض فقط. اختر مزوداً مسجلاً لعمل طلب حقيقي.');
-      return;
-    }
-    setSelectedWorker(worker);
-    setOrderForm({
-      serviceName: worker.profession_ar || '',
-      description: '',
-      appointmentDate: '',
-      phone: user?.phone || '',
-    });
-    setOrderModalOpen(true);
-  };
-
-  const handleOrderSubmit = (event) => {
-    event.preventDefault();
-    if (!selectedWorker || !user) return;
-    if (!orderForm.description || !orderForm.appointmentDate) {
-      alert('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.');
-      return;
-    }
-    setOrderSubmitting(true);
-    try {
-      dataService.createJob({
-        clientId: user.id,
-        clientName: user.fullName || user.name || user.email,
-        workerId: selectedWorker.id,
-        workerName: selectedWorker.name,
-        serviceName: orderForm.serviceName || selectedWorker.profession_ar,
-        description: orderForm.description,
-        phone: orderForm.phone || user.phone || 'غير محدد',
-        location: user.address || user.city || 'غير محدد',
-        appointmentDate: orderForm.appointmentDate,
-      });
-      alert('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.');
-      setOrderModalOpen(false);
-      setOrderForm({
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { showModal } = useModal(); // Destructure showModal
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [registeredWorkers, setRegisteredWorkers] = useState([]);
+    const [orderModalOpen, setOrderModalOpen] = useState(false);
+    const [selectedWorker, setSelectedWorker] = useState(null);
+    const [orderForm, setOrderForm] = useState({
         serviceName: '',
         description: '',
         appointmentDate: '',
         phone: '',
-      });
-      setSelectedWorker(null);
-    } catch (error) {
-      alert(error.message || 'حدث خطأ أثناء إرسال الطلب');
-    } finally {
-      setOrderSubmitting(false);
-    }
-  };
-
-  const closeOrderModal = () => {
-    setOrderModalOpen(false);
-    setSelectedWorker(null);
-    setOrderForm({
-      serviceName: '',
-      description: '',
-      appointmentDate: '',
-      phone: user?.phone || '',
     });
-  };
+    const [orderSubmitting, setOrderSubmitting] = useState(false);
 
-  // دالة لفتح صفحة الملف الشخصي
-  const handleViewProfile = (worker) => {
-    if (worker.id) {
-      navigate(`/provider-profile/${worker.id}`, { state: { provider: worker } });
-    } else {
-      navigate('/provider-profile', { state: { provider: worker } });
-    }
-  };
+    const staticWorkers = [
+        {
+            id: 2,
+            name: "يوسف محمود",
+            profession: "carpenter",
+            profession_ar: "نجار",
+            distance: 5.3,
+            rating: 4.7,
+            status: "available",
+            completedJobs: 203,
+            yearsExp: 12
+        },
+        {
+            id: 3,
+            name: "خالد علي",
+            profession: "plumber",
+            profession_ar: "سباك",
+            distance: 3.1,
+            rating: 4.5,
+            status: "busy",
+            completedJobs: 89,
+            yearsExp: 5
+        },
+        {
+            id: 4,
+            name: "عمر حسن",
+            profession: "electrician",
+            profession_ar: "كهربائي",
+            distance: 2.4,
+            rating: 4.8,
+            status: "available",
+            completedJobs: 178,
+            yearsExp: 10
+        },
+        {
+            id: 6,
+            name: "محمد عبدالله",
+            profession: "electronics",
+            profession_ar: "فني إلكترونيات",
+            distance: 6.2,
+            rating: 4.4,
+            status: "available",
+            completedJobs: 92,
+            yearsExp: 6
+        },
+        {
+            id: 7,
+            name: "حسن إبراهيم",
+            profession: "carpenter",
+            profession_ar: "نجار",
+            distance: 3.7,
+            rating: 4.9,
+            status: "busy",
+            completedJobs: 245,
+            yearsExp: 15
+        },
+        {
+            id: 8,
+            name: "سعيد أحمد",
+            profession: "plumber",
+            profession_ar: "سباك",
+            distance: 2.1,
+            rating: 4.7,
+            status: "available",
+            completedJobs: 167,
+            yearsExp: 9
+        }
+    ].map((worker) => ({ ...worker, isRegistered: false }));
 
-  // تصفية البيانات
-  const filteredWorkers = allWorkersData.filter(worker => {
-    const matchesCategory = selectedCategory === 'all' || worker.profession === selectedCategory;
-    const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      worker.profession_ar.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+    const categories = [
+        { key: "all", name: "الكل", icon: Zap, color: "#2563eb", bg: "#eff6ff", bgGradient: "from-blue-50 to-sky-50" },
+        { key: "electrician", name: "الكهرباء", icon: Zap, color: "#eab308", bg: "#fef9c3", bgGradient: "from-yellow-50 to-amber-50" },
+        { key: "plumber", name: "السباكة", icon: Wrench, color: "#06b6d4", bg: "#cffafe", bgGradient: "from-cyan-50 to-sky-50" },
+        { key: "carpenter", name: "النجارة", icon: Hammer, color: "#8b5cf6", bg: "#ede9fe", bgGradient: "from-purple-50 to-violet-50" },
+        { key: "hvac", name: "فني تكييفات", icon: Paintbrush, color: "#0ea5e9", bg: "#e0f2fe", bgGradient: "from-sky-50 to-blue-50" },
+        { key: "naqash", name: "نقاشة", icon: Paintbrush, color: "#f97316", bg: "#ffedd5", bgGradient: "from-orange-50 to-amber-50" },
+        { key: "electronics", name: "فني إلكترونيات", icon: Zap, color: "#22c55e", bg: "#dcfce7", bgGradient: "from-green-50 to-emerald-50" }
+    ];
 
-  // Categories Carousel Component with RTL Support
-  const CategoriesCarousel = ({ categories, selectedCategory, onCategorySelect }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [itemsPerView, setItemsPerView] = useState(4);
-    const carouselRef = useRef(null);
-    const trackRef = useRef(null);
+    // دالة للتحقق من توفر العامل بناءً على ساعات العمل
+    const checkWorkerAvailability = (worker) => {
+        if (!worker.availableHours || !worker.availableDays || worker.availableDays.length === 0) {
+            return false;
+        }
+
+        const now = new Date();
+        const dayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const currentDayKey = dayNames[dayIndex];
+
+        // التحقق من أن اليوم الحالي ضمن أيام العمل المتاحة
+        if (!worker.availableDays.includes(currentDayKey)) {
+            return false;
+        }
+
+        // تحليل ساعات العمل (التنسيق: "9 AM - 5 PM")
+        const hoursMatch = worker.availableHours.match(/(\d+)\s+(AM|PM)\s*-\s*(\d+)\s+(AM|PM)/);
+        if (!hoursMatch) {
+            return true; // إذا لم يكن التنسيق صحيحاً، نعتبره متاحاً
+        }
+
+        const [, startHour, startPeriod, endHour, endPeriod] = hoursMatch;
+        let startTime = parseInt(startHour);
+        let endTime = parseInt(endHour);
+
+        // تحويل إلى 24 ساعة
+        if (startPeriod === 'PM' && startTime !== 12) startTime += 12;
+        if (startPeriod === 'AM' && startTime === 12) startTime = 0;
+        if (endPeriod === 'PM' && endTime !== 12) endTime += 12;
+        if (endPeriod === 'AM' && endTime === 12) endTime = 0;
+
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTime24 = currentHour * 60 + currentMinute; // الوقت بالدقائق من بداية اليوم
+        const startTime24 = startTime * 60;
+        const endTime24 = endTime * 60;
+
+        // التحقق من أن الوقت الحالي ضمن نطاق ساعات العمل
+        return currentTime24 >= startTime24 && currentTime24 <= endTime24;
+    };
 
     useEffect(() => {
-      const updateItemsPerView = () => {
-        const width = window.innerWidth;
-        if (width < 640) {
-          setItemsPerView(2);
-        } else if (width < 1024) {
-          setItemsPerView(3);
-        } else {
-          setItemsPerView(4);
-        }
-      };
+        const workers = dataService.getAllWorkers();
+        const mapped = workers.map((worker) => {
+            const ratingStats = dataService.getRatingStatsForUser?.(worker.id) || { average: 0 };
+            const jobs = dataService.getJobsForWorker?.(worker.id) || [];
+            const completedCount = jobs.filter((job) => job.status === 'completed').length;
 
-      updateItemsPerView();
-      window.addEventListener('resize', updateItemsPerView);
-      return () => window.removeEventListener('resize', updateItemsPerView);
+            const isAvailable = checkWorkerAvailability(worker);
+
+            return {
+                id: worker.id,
+                name: worker.fullName || worker.name || worker.email,
+                profession: worker.professionKey,
+                profession_ar: worker.profession_ar || 'حرفي',
+                distance: (Math.random() * 5 + 1).toFixed(1),
+                rating: ratingStats.average ? Number(ratingStats.average.toFixed(1)) : 0,
+                status: isAvailable ? 'available' : 'busy',
+                completedJobs: completedCount,
+                yearsExp: worker.yearsExperience || 1,
+                photos: worker.workPhotos || worker.photos || [],
+                isRegistered: true,
+                profilePhoto: worker.profilePhoto || null,
+                availableHours: worker.availableHours || '',
+                availableDays: worker.availableDays || [],
+            };
+        });
+        setRegisteredWorkers(mapped);
     }, []);
 
-    useEffect(() => {
-      setCurrentIndex(0);
-    }, [itemsPerView]);
+    const allWorkersData = [...staticWorkers, ...registeredWorkers];
 
-    const needsCarousel = categories.length > itemsPerView;
-    const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
-    const canScrollPrev = needsCarousel && currentIndex > 0;
-    const canScrollNext = needsCarousel && currentIndex < maxIndex;
-
-    // RTL Logic:
-    // Items are laid out Right-to-Left (due to dir="rtl" on parent).
-    // [Item 1 (Rightmost)] [Item 2] [Item 3] ...
-    // To see "Next" items (which are to the Left), we must scroll the view to the Left?
-    // OR move the track to the Right (positive X)?
-    // Let's rely on standard index logic.
-    // Index 0: 0% translation.
-    // Index 1: Move 1 item width. In RTL, if we want to shift view to [Item 2], 
-    // we effectively move the Track to the RIGHT so Item 2 moves into the viewport slot 1?
-    // YES. In RTL, "next" items are on the left. To bring them into view (which starts at right), we translate the track positively (Right).
-    // User Requirement: "right arrow moves the carousel left", "left arrow moves it right".
-    // Left Arrow (<) -> Should show NEXT items (on the left). So it moves track RIGHT.
-    // Right Arrow (>) -> Should show PREV items (on the right). So it moves track LEFT.
-
-    const scrollNext = () => { // Move to Next items (Leftwards in layout)
-      if (canScrollNext) {
-        setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
-      }
+    const handleOrderNow = (worker) => {
+        if (!user) {
+            showModal('يرجى تسجيل الدخول لتقديم طلب خدمة.', 'تنبيه');
+            return;
+        }
+        if (!worker?.isRegistered) {
+            showModal('هذا المزود للعرض فقط. اختر مزوداً مسجلاً لعمل طلب حقيقي.', 'تنبيه');
+            return;
+        }
+        setSelectedWorker(worker);
+        setOrderForm({
+            serviceName: worker.profession_ar || '',
+            description: '',
+            appointmentDate: '',
+            phone: user?.phone || '',
+        });
+        setOrderModalOpen(true);
     };
 
-    const scrollPrev = () => { // Move to Prev items (Rightwards in layout)
-      if (canScrollPrev) {
-        setCurrentIndex(prev => Math.max(0, prev - 1));
-      }
+    const handleOrderSubmit = (event) => {
+        event.preventDefault();
+        if (!selectedWorker || !user) return;
+        if (!orderForm.description || !orderForm.appointmentDate) {
+            showModal('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.', 'خطأ', 'error');
+            return;
+        }
+        setOrderSubmitting(true);
+        try {
+            dataService.createJob({
+                clientId: user.id,
+                clientName: user.fullName || user.name || user.email,
+                workerId: selectedWorker.id,
+                workerName: selectedWorker.name,
+                serviceName: orderForm.serviceName || selectedWorker.profession_ar,
+                description: orderForm.description,
+                phone: orderForm.phone || user.phone || 'غير محدد',
+                location: user.address || user.city || 'غير محدد',
+                appointmentDate: orderForm.appointmentDate,
+            });
+            showModal('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.', 'تم بنجاح', 'success');
+            setOrderModalOpen(false);
+            setOrderForm({
+                serviceName: '',
+                description: '',
+                appointmentDate: '',
+                phone: '',
+            });
+            setSelectedWorker(null);
+        } catch (error) {
+            showModal(error.message || 'حدث خطأ أثناء إرسال الطلب', 'خطأ', 'error');
+        } finally {
+            setOrderSubmitting(false);
+        }
     };
 
-    // Calculate translate X.
-    // For RTL, we want positive translation to move track Right (revealing left items).
-    const translateX = currentIndex * (100 / itemsPerView);
+    const closeOrderModal = () => {
+        setOrderModalOpen(false);
+        setSelectedWorker(null);
+        setOrderForm({
+            serviceName: '',
+            description: '',
+            appointmentDate: '',
+            phone: user?.phone || '',
+        });
+    };
+
+    // دالة لفتح صفحة الملف الشخصي
+    const handleViewProfile = (worker) => {
+        if (worker.id) {
+            navigate(`/provider-profile/${worker.id}`, { state: { provider: worker } });
+        } else {
+            navigate('/provider-profile', { state: { provider: worker } });
+        }
+    };
+
+    // تصفية البيانات
+    const filteredWorkers = allWorkersData.filter(worker => {
+        const matchesCategory = selectedCategory === 'all' || worker.profession === selectedCategory;
+        const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            worker.profession_ar.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    // Categories Carousel Component with RTL Support
+    const CategoriesCarousel = ({ categories, selectedCategory, onCategorySelect }) => {
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [itemsPerView, setItemsPerView] = useState(4);
+        const carouselRef = useRef(null);
+        const trackRef = useRef(null);
+
+        useEffect(() => {
+            const updateItemsPerView = () => {
+                const width = window.innerWidth;
+                if (width < 640) {
+                    setItemsPerView(2);
+                } else if (width < 1024) {
+                    setItemsPerView(3);
+                } else {
+                    setItemsPerView(4);
+                }
+            };
+
+            updateItemsPerView();
+            window.addEventListener('resize', updateItemsPerView);
+            return () => window.removeEventListener('resize', updateItemsPerView);
+        }, []);
+
+        useEffect(() => {
+            setCurrentIndex(0);
+        }, [itemsPerView]);
+
+        const needsCarousel = categories.length > itemsPerView;
+        const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
+        const canScrollPrev = needsCarousel && currentIndex > 0;
+        const canScrollNext = needsCarousel && currentIndex < maxIndex;
+
+        // RTL Logic:
+        // Items are laid out Right-to-Left (due to dir="rtl" on parent).
+        // [Item 1 (Rightmost)] [Item 2] [Item 3] ...
+        // To see "Next" items (which are to the Left), we must scroll the view to the Left?
+        // OR move the track to the Right (positive X)?
+        // Let's rely on standard index logic.
+        // Index 0: 0% translation.
+        // Index 1: Move 1 item width. In RTL, if we want to shift view to [Item 2], 
+        // we effectively move the Track to the RIGHT so Item 2 moves into the viewport slot 1?
+        // YES. In RTL, "next" items are on the left. To bring them into view (which starts at right), we translate the track positively (Right).
+        // User Requirement: "right arrow moves the carousel left", "left arrow moves it right".
+        // Left Arrow (<) -> Should show NEXT items (on the left). So it moves track RIGHT.
+        // Right Arrow (>) -> Should show PREV items (on the right). So it moves track LEFT.
+
+        const scrollNext = () => { // Move to Next items (Leftwards in layout)
+            if (canScrollNext) {
+                setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+            }
+        };
+
+        const scrollPrev = () => { // Move to Prev items (Rightwards in layout)
+            if (canScrollPrev) {
+                setCurrentIndex(prev => Math.max(0, prev - 1));
+            }
+        };
+
+        // Calculate translate X.
+        // For RTL, we want positive translation to move track Right (revealing left items).
+        const translateX = currentIndex * (100 / itemsPerView);
+
+        return (
+            <div className="carousel-container">
+                {needsCarousel && (
+                    // Right Arrow Button (ChevronRight)
+                    // User: "right arrow moves the carousel left to reveal more items"
+                    // Wait, if it moves carousel LEFT (negative), it reveals items on the RIGHT.
+                    // This matches "Previous" in RTL.
+                    // So Right Arrow = Previous.
+                    <button
+                        className={`carousel-nav-btn carousel-nav-right ${!canScrollPrev ? 'disabled' : ''}`}
+                        onClick={scrollPrev}
+                        disabled={!canScrollPrev}
+                        aria-label="السابق (يمين)" // Previous (Right)
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                )}
+
+                <div className="carousel-wrapper" ref={carouselRef}>
+                    <div
+                        className="carousel-track"
+                        ref={trackRef}
+                        style={{
+                            // RTL: Positive translateX moves track to the Right, revealing items on the Left.
+                            transform: needsCarousel ? `translateX(${translateX}%)` : 'translateX(0)',
+                        }}
+                    >
+                        {categories.map((category) => {
+                            const Icon = category.icon;
+                            const isActive = selectedCategory === category.key;
+                            return (
+                                <div
+                                    key={category.key}
+                                    className={`carousel-category-card ${isActive ? 'active' : ''}`}
+                                    onClick={() => onCategorySelect(category.key)}
+                                >
+                                    <div className={`carousel-category-inner bg-gradient-to-br ${category.bgGradient || ''}`}>
+                                        <div className="carousel-category-top">
+                                            <div
+                                                className="carousel-category-icon-bg"
+                                                style={{ backgroundColor: category.color }}
+                                            >
+                                                <Icon size={20} color="white" strokeWidth={2.5} />
+                                            </div>
+                                        </div>
+                                        <div className="carousel-category-content">
+                                            <span className="carousel-category-name">{category.name}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {needsCarousel && (
+                    // Left Arrow Button (ChevronLeft)
+                    // User: "left arrow moves it right to show previous items"
+                    // Wait. User text: "left arrow moves it right to show PREVIOUS items".
+                    // My logic above: Left arrow = Next.
+                    // Let's re-read CAREFULLY.
+                    // "right arrow moves the carousel left to reveal more items" (Move Left -> Reveal Right? No. Move Content Left -> Reveal content on Right? Yes.)
+                    // "left arrow moves it right to show previous items" (Move Content Right -> Reveal content on Left? Yes.)
+                    // IF "more items" are on the LEFT (standard RTL).
+                    // Then we need to move content RIGHT to see them.
+                    // This corresponds to "Left Arrow moves it Right".
+                    // So Left Arrow = Next (More Items).
+                    // Right Arrow = Prev.
+                    // Code below implements this.
+                    <button
+                        className={`carousel-nav-btn carousel-nav-left ${!canScrollNext ? 'disabled' : ''}`}
+                        onClick={scrollNext}
+                        disabled={!canScrollNext}
+                        aria-label="التالي (يسار)" // Next (Left)
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                )}
+            </div>
+        );
+    };
 
     return (
-      <div className="carousel-container">
-        {needsCarousel && (
-          // Right Arrow Button (ChevronRight)
-          // User: "right arrow moves the carousel left to reveal more items"
-          // Wait, if it moves carousel LEFT (negative), it reveals items on the RIGHT.
-          // This matches "Previous" in RTL.
-          // So Right Arrow = Previous.
-          <button
-            className={`carousel-nav-btn carousel-nav-right ${!canScrollPrev ? 'disabled' : ''}`}
-            onClick={scrollPrev}
-            disabled={!canScrollPrev}
-            aria-label="السابق (يمين)" // Previous (Right)
-          >
-            <ChevronRight size={20} />
-          </button>
-        )}
-
-        <div className="carousel-wrapper" ref={carouselRef}>
-          <div
-            className="carousel-track"
-            ref={trackRef}
-            style={{
-              // RTL: Positive translateX moves track to the Right, revealing items on the Left.
-              transform: needsCarousel ? `translateX(${translateX}%)` : 'translateX(0)',
-            }}
-          >
-            {categories.map((category) => {
-              const Icon = category.icon;
-              const isActive = selectedCategory === category.key;
-              return (
-                <div
-                  key={category.key}
-                  className={`carousel-category-card ${isActive ? 'active' : ''}`}
-                  onClick={() => onCategorySelect(category.key)}
-                >
-                  <div className={`carousel-category-inner bg-gradient-to-br ${category.bgGradient || ''}`}>
-                    <div className="carousel-category-top">
-                      <div
-                        className="carousel-category-icon-bg"
-                        style={{ backgroundColor: category.color }}
-                      >
-                        <Icon size={20} color="white" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                    <div className="carousel-category-content">
-                      <span className="carousel-category-name">{category.name}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {needsCarousel && (
-          // Left Arrow Button (ChevronLeft)
-          // User: "left arrow moves it right to show previous items"
-          // Wait. User text: "left arrow moves it right to show PREVIOUS items".
-          // My logic above: Left arrow = Next.
-          // Let's re-read CAREFULLY.
-          // "right arrow moves the carousel left to reveal more items" (Move Left -> Reveal Right? No. Move Content Left -> Reveal content on Right? Yes.)
-          // "left arrow moves it right to show previous items" (Move Content Right -> Reveal content on Left? Yes.)
-          // IF "more items" are on the LEFT (standard RTL).
-          // Then we need to move content RIGHT to see them.
-          // This corresponds to "Left Arrow moves it Right".
-          // So Left Arrow = Next (More Items).
-          // Right Arrow = Prev.
-          // Code below implements this.
-          <button
-            className={`carousel-nav-btn carousel-nav-left ${!canScrollNext ? 'disabled' : ''}`}
-            onClick={scrollNext}
-            disabled={!canScrollNext}
-            aria-label="التالي (يسار)" // Next (Left)
-          >
-            <ChevronLeft size={20} />
-          </button>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="app-container">
-      <style>{`
+        <div className="app-container">
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
         
         * {
@@ -959,176 +962,176 @@ export default function ServicesPage() {
         }
       `}</style>
 
-      <div className="main-container">
-        <header className="header-section">
-          <h1 className="main-title">خدماتنا</h1>
-          <p className="subtitle">أهلاً بك في خدمة لتقديم خدمات الحرفيين المحترفين</p>
+            <div className="main-container">
+                <header className="header-section">
+                    <h1 className="main-title">خدماتنا</h1>
+                    <p className="subtitle">أهلاً بك في خدمة لتقديم خدمات الحرفيين المحترفين</p>
 
-          <div className="search-container">
-            <div className="search-wrapper">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="ابحث بالاسم أو المهنة..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-        </header>
+                    <div className="search-container">
+                        <div className="search-wrapper">
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="ابحث بالاسم أو المهنة..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </header>
 
-        <section className="categories-section">
-          <CategoriesCarousel
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-          />
-        </section>
+                <section className="categories-section">
+                    <CategoriesCarousel
+                        categories={categories}
+                        selectedCategory={selectedCategory}
+                        onCategorySelect={setSelectedCategory}
+                    />
+                </section>
 
-        <section className="results-section">
-          <h2 className="results-header">
-            {filteredWorkers.length > 0
-              ? `وجدنا ${filteredWorkers.length} حرفي متاح`
-              : 'نتائج البحث'}
-          </h2>
+                <section className="results-section">
+                    <h2 className="results-header">
+                        {filteredWorkers.length > 0
+                            ? `وجدنا ${filteredWorkers.length} حرفي متاح`
+                            : 'نتائج البحث'}
+                    </h2>
 
-          {filteredWorkers.length > 0 ? (
-            <div className="workers-grid">
-              {filteredWorkers.map(worker => (
-                <div key={worker.id} className="worker-card">
-                  <div className="card-image">
-                    {worker.profilePhoto ? (
-                      <img
-                        src={worker.profilePhoto}
-                        alt={`صورة ${worker.name}`}
-                        className="worker-photo"
-                      />
+                    {filteredWorkers.length > 0 ? (
+                        <div className="workers-grid">
+                            {filteredWorkers.map(worker => (
+                                <div key={worker.id} className="worker-card">
+                                    <div className="card-image">
+                                        {worker.profilePhoto ? (
+                                            <img
+                                                src={worker.profilePhoto}
+                                                alt={`صورة ${worker.name}`}
+                                                className="worker-photo"
+                                            />
+                                        ) : (
+                                            <span className="placeholder-icon">👷</span>
+                                        )}
+                                        <span className={`status-badge ${worker.status === 'available' ? 'status-available' : 'status-busy'}`}>
+                                            {worker.status === 'available' ? '✓ متاح الآن' : '⏱ مشغول'}
+                                        </span>
+                                    </div>
+
+                                    <div className="card-body">
+                                        <div className="card-header-row">
+                                            <div className="worker-info">
+                                                <h3>{worker.name}</h3>
+                                                <p className="profession">{worker.profession_ar}</p>
+                                                {worker.photos && worker.photos.length > 0 && (
+                                                    <p className="profession" style={{ marginTop: '4px', fontSize: '12px' }}>
+                                                        لديه {worker.photos.length} صور لأعماله
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="rating-badge">
+                                                <span>⭐</span>
+                                                <span>{worker.rating}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="stats-row">
+                                            <div className="stat-item">
+                                                <span className="stat-value">{worker.completedJobs}</span>
+                                                <span className="stat-label">عملية منجزة</span>
+                                            </div>
+                                            <div className="stat-item">
+                                                <span className="stat-value">{worker.yearsExp}</span>
+                                                <span className="stat-label">سنوات خبرة</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="distance-info">
+                                            <span>📍</span>
+                                            <span>على بعد {worker.distance} كم</span>
+                                        </div>
+
+                                        <div className="card-actions">
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={() => handleOrderNow(worker)}
+                                            >
+                                                اطلب الآن
+                                            </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => handleViewProfile(worker)}
+                                            >
+                                                عرض الملف الشخصي
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
-                      <span className="placeholder-icon">👷</span>
+                        <div className="no-results">
+                            <div className="no-results-icon">🔍</div>
+                            <p className="no-results-text">لم نجد نتائج مطابقة لبحثك</p>
+                            <p style={{ marginTop: '12px', color: '#9CA3AF' }}>جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
+                        </div>
                     )}
-                    <span className={`status-badge ${worker.status === 'available' ? 'status-available' : 'status-busy'}`}>
-                      {worker.status === 'available' ? '✓ متاح الآن' : '⏱ مشغول'}
-                    </span>
-                  </div>
+                </section>
 
-                  <div className="card-body">
-                    <div className="card-header-row">
-                      <div className="worker-info">
-                        <h3>{worker.name}</h3>
-                        <p className="profession">{worker.profession_ar}</p>
-                        {worker.photos && worker.photos.length > 0 && (
-                          <p className="profession" style={{ marginTop: '4px', fontSize: '12px' }}>
-                            لديه {worker.photos.length} صور لأعماله
-                          </p>
-                        )}
-                      </div>
-                      <div className="rating-badge">
-                        <span>⭐</span>
-                        <span>{worker.rating}</span>
-                      </div>
-                    </div>
-
-                    <div className="stats-row">
-                      <div className="stat-item">
-                        <span className="stat-value">{worker.completedJobs}</span>
-                        <span className="stat-label">عملية منجزة</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-value">{worker.yearsExp}</span>
-                        <span className="stat-label">سنوات خبرة</span>
-                      </div>
-                    </div>
-
-                    <div className="distance-info">
-                      <span>📍</span>
-                      <span>على بعد {worker.distance} كم</span>
-                    </div>
-
-                    <div className="card-actions">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => handleOrderNow(worker)}
-                      >
-                        اطلب الآن
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => handleViewProfile(worker)}
-                      >
-                        عرض الملف الشخصي
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                {orderModalOpen && selectedWorker && (
+                    <>
+                        <div className="order-modal-backdrop" onClick={closeOrderModal}></div>
+                        <div className="order-modal">
+                            <h3>طلب خدمة من {selectedWorker.name}</h3>
+                            <p>سيتم إرسال تفاصيلك فوراً إلى المزود ليؤكد الموعد.</p>
+                            <form onSubmit={handleOrderSubmit}>
+                                <div className="order-form-group">
+                                    <label>نوع الخدمة</label>
+                                    <input
+                                        className="order-form-input"
+                                        type="text"
+                                        value={orderForm.serviceName}
+                                        onChange={(e) => setOrderForm((prev) => ({ ...prev, serviceName: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="order-form-group">
+                                    <label>وصف المشكلة</label>
+                                    <textarea
+                                        className="order-form-input order-form-textarea"
+                                        value={orderForm.description}
+                                        onChange={(e) => setOrderForm((prev) => ({ ...prev, description: e.target.value }))}
+                                        placeholder="اشرح احتياجك ليقدر المزود مدة وتكلفة الخدمة"
+                                    />
+                                </div>
+                                <div className="order-form-group">
+                                    <label>ميعاد الزيارة</label>
+                                    <input
+                                        className="order-form-input"
+                                        type="datetime-local"
+                                        value={orderForm.appointmentDate}
+                                        onChange={(e) => setOrderForm((prev) => ({ ...prev, appointmentDate: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="order-form-group">
+                                    <label>رقم التواصل</label>
+                                    <input
+                                        className="order-form-input"
+                                        type="tel"
+                                        value={orderForm.phone}
+                                        onChange={(e) => setOrderForm((prev) => ({ ...prev, phone: e.target.value }))}
+                                        placeholder="رقم هاتفك لتأكيد الموعد"
+                                    />
+                                </div>
+                                <div className="order-modal-actions">
+                                    <button type="submit" className="order-submit-btn" disabled={orderSubmitting}>
+                                        {orderSubmitting ? 'يتم الإرسال...' : 'تأكيد الطلب'}
+                                    </button>
+                                    <button type="button" className="order-cancel-btn" onClick={closeOrderModal}>
+                                        إلغاء
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </>
+                )}
             </div>
-          ) : (
-            <div className="no-results">
-              <div className="no-results-icon">🔍</div>
-              <p className="no-results-text">لم نجد نتائج مطابقة لبحثك</p>
-              <p style={{ marginTop: '12px', color: '#9CA3AF' }}>جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
-            </div>
-          )}
-        </section>
-
-        {orderModalOpen && selectedWorker && (
-          <>
-            <div className="order-modal-backdrop" onClick={closeOrderModal}></div>
-            <div className="order-modal">
-              <h3>طلب خدمة من {selectedWorker.name}</h3>
-              <p>سيتم إرسال تفاصيلك فوراً إلى المزود ليؤكد الموعد.</p>
-              <form onSubmit={handleOrderSubmit}>
-                <div className="order-form-group">
-                  <label>نوع الخدمة</label>
-                  <input
-                    className="order-form-input"
-                    type="text"
-                    value={orderForm.serviceName}
-                    onChange={(e) => setOrderForm((prev) => ({ ...prev, serviceName: e.target.value }))}
-                  />
-                </div>
-                <div className="order-form-group">
-                  <label>وصف المشكلة</label>
-                  <textarea
-                    className="order-form-input order-form-textarea"
-                    value={orderForm.description}
-                    onChange={(e) => setOrderForm((prev) => ({ ...prev, description: e.target.value }))}
-                    placeholder="اشرح احتياجك ليقدر المزود مدة وتكلفة الخدمة"
-                  />
-                </div>
-                <div className="order-form-group">
-                  <label>ميعاد الزيارة</label>
-                  <input
-                    className="order-form-input"
-                    type="datetime-local"
-                    value={orderForm.appointmentDate}
-                    onChange={(e) => setOrderForm((prev) => ({ ...prev, appointmentDate: e.target.value }))}
-                  />
-                </div>
-                <div className="order-form-group">
-                  <label>رقم التواصل</label>
-                  <input
-                    className="order-form-input"
-                    type="tel"
-                    value={orderForm.phone}
-                    onChange={(e) => setOrderForm((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder="رقم هاتفك لتأكيد الموعد"
-                  />
-                </div>
-                <div className="order-modal-actions">
-                  <button type="submit" className="order-submit-btn" disabled={orderSubmitting}>
-                    {orderSubmitting ? 'يتم الإرسال...' : 'تأكيد الطلب'}
-                  </button>
-                  <button type="button" className="order-cancel-btn" onClick={closeOrderModal}>
-                    إلغاء
-                  </button>
-                </div>
-              </form>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 }

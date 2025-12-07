@@ -11,10 +11,13 @@ import example4 from '../assets/Images/example4.jpeg';
 import example5 from '../assets/Images/example5.jpeg';
 import example6 from '../assets/Images/example6.jpeg';
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 export default function ServiceProviderProfile() {
   const location = useLocation();
   const { workerId } = useParams();
   const { user } = useAuth();
+  const { showModal } = useModal(); // Destructure showModal
   const [workerData, setWorkerData] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -170,15 +173,15 @@ export default function ServiceProviderProfile() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.description || !formData.appointmentDate) {
-      alert('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.');
+      showModal('من فضلك اكتب وصف المشكلة وحدد موعداً مناسباً.', 'خطأ', 'error');
       return;
     }
     if (!user) {
-      alert('يرجى تسجيل الدخول لتقديم طلب خدمة.');
+      showModal('يرجى تسجيل الدخول لتقديم طلب خدمة.', 'تنبيه', 'info');
       return;
     }
     if (!provider.id) {
-      alert('لا يمكن تحديد مقدم الخدمة');
+      showModal('لا يمكن تحديد مقدم الخدمة', 'خطأ', 'error');
       return;
     }
 
@@ -196,11 +199,11 @@ export default function ServiceProviderProfile() {
         appointmentDate: formData.appointmentDate,
       });
 
-      alert('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.');
+      showModal('تم إرسال طلبك بنجاح! سيتم إشعار المزود فوراً.', 'تم بنجاح', 'success');
       setModalOpen(false);
       setFormData({ serviceType: '', description: '', name: '', phone: '', appointmentDate: '' });
     } catch (error) {
-      alert(error.message || 'حدث خطأ أثناء إرسال الطلب');
+      showModal(error.message || 'حدث خطأ أثناء إرسال الطلب', 'خطأ', 'error');
     } finally {
       setIsSubmitting(false);
     }

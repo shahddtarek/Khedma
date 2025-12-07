@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { useModal } from '../context/ModalContext'; // Import useModal
+
 export default function PaymentPage() {
   const location = useLocation();
   const provider = location?.state?.provider;
-  
+  const { showModal } = useModal(); // Destructure showModal
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('digital');
@@ -47,11 +50,11 @@ export default function PaymentPage() {
     if (paymentMethod === 'cod') {
       // محاكاة التحقق من تسجيل الدخول
       const isLoggedIn = false; // غير هذه القيمة لـ true لاختبار حالة تسجيل الدخول
-      
+
       if (isLoggedIn) {
         setCurrentStep(3);
       } else {
-        alert('لإتمام الطلب بالدفع عند الاستلام، يرجى تسجيل الدخول أولاً.');
+        showModal('لإتمام الطلب بالدفع عند الاستلام، يرجى تسجيل الدخول أولاً.', 'تنبيه', 'info');
         closeModal();
       }
     } else {
@@ -61,30 +64,30 @@ export default function PaymentPage() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.cardName.trim()) {
       newErrors.cardName = 'اسم حامل البطاقة مطلوب';
     }
-    
+
     if (!formData.cardNumber.trim() || formData.cardNumber.replace(/\s/g, '').length !== 16) {
       newErrors.cardNumber = 'رقم البطاقة يجب أن يكون 16 رقم';
     }
-    
+
     if (!formData.expDate.trim() || !/^\d{2}\/\d{2}$/.test(formData.expDate)) {
       newErrors.expDate = 'التاريخ يجب أن يكون بصيغة MM/YY';
     }
-    
+
     if (!formData.cvv.trim() || formData.cvv.length !== 3) {
       newErrors.cvv = 'CVV يجب أن يكون 3 أرقام';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       // محاكاة معالجة الدفع
       setTimeout(() => {
@@ -98,18 +101,18 @@ export default function PaymentPage() {
     const matches = v.match(/\d{4,16}/g);
     const match = (matches && matches[0]) || '';
     const parts = [];
-    
+
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
-    
+
     return parts.length ? parts.join(' ') : value;
   };
 
   const handleCardNumberChange = (e) => {
     const formatted = formatCardNumber(e.target.value);
     if (formatted.replace(/\s/g, '').length <= 16) {
-      setFormData({...formData, cardNumber: formatted});
+      setFormData({ ...formData, cardNumber: formatted });
     }
   };
 
@@ -118,7 +121,7 @@ export default function PaymentPage() {
     if (value.length >= 2) {
       value = value.slice(0, 2) + '/' + value.slice(2, 4);
     }
-    setFormData({...formData, expDate: value});
+    setFormData({ ...formData, expDate: value });
   };
 
   return (
@@ -682,11 +685,11 @@ export default function PaymentPage() {
                     </div>
                     <div className="card-info">
                       <div>
-                        <div style={{fontSize: '10px', marginBottom: '4px'}}>اسم حامل البطاقة</div>
+                        <div style={{ fontSize: '10px', marginBottom: '4px' }}>اسم حامل البطاقة</div>
                         <div>{formData.cardName || 'الاسم الكامل'}</div>
                       </div>
                       <div>
-                        <div style={{fontSize: '10px', marginBottom: '4px'}}>تاريخ الانتهاء</div>
+                        <div style={{ fontSize: '10px', marginBottom: '4px' }}>تاريخ الانتهاء</div>
                         <div>{formData.expDate || 'MM/YY'}</div>
                       </div>
                     </div>
@@ -700,7 +703,7 @@ export default function PaymentPage() {
                         className={`form-input ${errors.cardName ? 'error' : ''}`}
                         placeholder="الاسم كما يظهر على البطاقة"
                         value={formData.cardName}
-                        onChange={(e) => setFormData({...formData, cardName: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, cardName: e.target.value })}
                       />
                       {errors.cardName && <div className="error-message">{errors.cardName}</div>}
                     </div>
@@ -741,7 +744,7 @@ export default function PaymentPage() {
                           onChange={(e) => {
                             const value = e.target.value.replace(/\D/g, '');
                             if (value.length <= 3) {
-                              setFormData({...formData, cvv: value});
+                              setFormData({ ...formData, cvv: value });
                             }
                           }}
                           maxLength="3"
@@ -759,7 +762,7 @@ export default function PaymentPage() {
                   <h3 className="success-title">تم الدفع بنجاح!</h3>
                   <p className="success-message">تم تأكيد حجزك بنجاح</p>
                   <p className="order-number">رقم العملية: #ORD-{Math.floor(Math.random() * 100000)}</p>
-                  <p className="success-message" style={{fontSize: '14px'}}>
+                  <p className="success-message" style={{ fontSize: '14px' }}>
                     سيتم التواصل معك قريباً لتأكيد موعد الخدمة
                   </p>
                 </div>
