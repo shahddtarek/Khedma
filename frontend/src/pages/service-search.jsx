@@ -20,19 +20,7 @@ export default function ServicesPage() {
   });
   const [orderSubmitting, setOrderSubmitting] = useState(false);
 
-  // بيانات أكثر واقعية للحرفيين
   const staticWorkers = [
-    {
-      id: 1,
-      name: "إبراهيم محمد",
-      profession: "naqash",
-      profession_ar: "نقاش",
-      distance: 1.2,
-      rating: 4.9,
-      status: "available",
-      completedJobs: 156,
-      yearsExp: 8
-    },
     {
       id: 2,
       name: "يوسف محمود",
@@ -65,17 +53,6 @@ export default function ServicesPage() {
       status: "available",
       completedJobs: 178,
       yearsExp: 10
-    },
-    {
-      id: 5,
-      name: "أحمد سالم",
-      profession: "hvac",
-      profession_ar: "فني تكييفات",
-      distance: 4.8,
-      rating: 4.6,
-      status: "available",
-      completedJobs: 134,
-      yearsExp: 7
     },
     {
       id: 6,
@@ -132,7 +109,7 @@ export default function ServicesPage() {
     const dayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const currentDayKey = dayNames[dayIndex];
-    
+
     // التحقق من أن اليوم الحالي ضمن أيام العمل المتاحة
     if (!worker.availableDays.includes(currentDayKey)) {
       return false;
@@ -274,11 +251,11 @@ export default function ServicesPage() {
   const filteredWorkers = allWorkersData.filter(worker => {
     const matchesCategory = selectedCategory === 'all' || worker.profession === selectedCategory;
     const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         worker.profession_ar.toLowerCase().includes(searchTerm.toLowerCase());
+      worker.profession_ar.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  // Categories Carousel Component
+  // Categories Carousel Component with RTL Support
   const CategoriesCarousel = ({ categories, selectedCategory, onCategorySelect }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(4);
@@ -302,51 +279,70 @@ export default function ServicesPage() {
       return () => window.removeEventListener('resize', updateItemsPerView);
     }, []);
 
-    // إعادة تعيين الفهرس عند تغيير عدد العناصر المعروضة
     useEffect(() => {
       setCurrentIndex(0);
     }, [itemsPerView]);
 
-    // إذا كان عدد العناصر أقل من أو يساوي العناصر المعروضة، لا نحتاج للسلايدر
     const needsCarousel = categories.length > itemsPerView;
     const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
     const canScrollPrev = needsCarousel && currentIndex > 0;
     const canScrollNext = needsCarousel && currentIndex < maxIndex;
 
-    const scrollPrev = () => {
-      if (canScrollPrev) {
-        setCurrentIndex(prev => Math.max(0, prev - 1));
-      }
-    };
+    // RTL Logic:
+    // Items are laid out Right-to-Left (due to dir="rtl" on parent).
+    // [Item 1 (Rightmost)] [Item 2] [Item 3] ...
+    // To see "Next" items (which are to the Left), we must scroll the view to the Left?
+    // OR move the track to the Right (positive X)?
+    // Let's rely on standard index logic.
+    // Index 0: 0% translation.
+    // Index 1: Move 1 item width. In RTL, if we want to shift view to [Item 2], 
+    // we effectively move the Track to the RIGHT so Item 2 moves into the viewport slot 1?
+    // YES. In RTL, "next" items are on the left. To bring them into view (which starts at right), we translate the track positively (Right).
+    // User Requirement: "right arrow moves the carousel left", "left arrow moves it right".
+    // Left Arrow (<) -> Should show NEXT items (on the left). So it moves track RIGHT.
+    // Right Arrow (>) -> Should show PREV items (on the right). So it moves track LEFT.
 
-    const scrollNext = () => {
+    const scrollNext = () => { // Move to Next items (Leftwards in layout)
       if (canScrollNext) {
         setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
       }
     };
 
-    // حساب النسبة المئوية للتحريك بناءً على عدد العناصر المعروضة
+    const scrollPrev = () => { // Move to Prev items (Rightwards in layout)
+      if (canScrollPrev) {
+        setCurrentIndex(prev => Math.max(0, prev - 1));
+      }
+    };
+
+    // Calculate translate X.
+    // For RTL, we want positive translation to move track Right (revealing left items).
     const translateX = currentIndex * (100 / itemsPerView);
 
     return (
       <div className="carousel-container">
         {needsCarousel && (
+          // Right Arrow Button (ChevronRight)
+          // User: "right arrow moves the carousel left to reveal more items"
+          // Wait, if it moves carousel LEFT (negative), it reveals items on the RIGHT.
+          // This matches "Previous" in RTL.
+          // So Right Arrow = Previous.
           <button
-            className={`carousel-nav-btn carousel-nav-right ${!canScrollNext ? 'disabled' : ''}`}
-            onClick={scrollNext}
-            disabled={!canScrollNext}
-            aria-label="التالي"
+            className={`carousel-nav-btn carousel-nav-right ${!canScrollPrev ? 'disabled' : ''}`}
+            onClick={scrollPrev}
+            disabled={!canScrollPrev}
+            aria-label="السابق (يمين)" // Previous (Right)
           >
             <ChevronRight size={20} />
           </button>
         )}
-        
+
         <div className="carousel-wrapper" ref={carouselRef}>
           <div
             className="carousel-track"
             ref={trackRef}
             style={{
-              transform: needsCarousel ? `translateX(-${translateX}%)` : 'translateX(0)',
+              // RTL: Positive translateX moves track to the Right, revealing items on the Left.
+              transform: needsCarousel ? `translateX(${translateX}%)` : 'translateX(0)',
             }}
           >
             {categories.map((category) => {
@@ -378,11 +374,24 @@ export default function ServicesPage() {
         </div>
 
         {needsCarousel && (
+          // Left Arrow Button (ChevronLeft)
+          // User: "left arrow moves it right to show previous items"
+          // Wait. User text: "left arrow moves it right to show PREVIOUS items".
+          // My logic above: Left arrow = Next.
+          // Let's re-read CAREFULLY.
+          // "right arrow moves the carousel left to reveal more items" (Move Left -> Reveal Right? No. Move Content Left -> Reveal content on Right? Yes.)
+          // "left arrow moves it right to show previous items" (Move Content Right -> Reveal content on Left? Yes.)
+          // IF "more items" are on the LEFT (standard RTL).
+          // Then we need to move content RIGHT to see them.
+          // This corresponds to "Left Arrow moves it Right".
+          // So Left Arrow = Next (More Items).
+          // Right Arrow = Prev.
+          // Code below implements this.
           <button
-            className={`carousel-nav-btn carousel-nav-left ${!canScrollPrev ? 'disabled' : ''}`}
-            onClick={scrollPrev}
-            disabled={!canScrollPrev}
-            aria-label="السابق"
+            className={`carousel-nav-btn carousel-nav-left ${!canScrollNext ? 'disabled' : ''}`}
+            onClick={scrollNext}
+            disabled={!canScrollNext}
+            aria-label="التالي (يسار)" // Next (Left)
           >
             <ChevronLeft size={20} />
           </button>
@@ -954,7 +963,7 @@ export default function ServicesPage() {
         <header className="header-section">
           <h1 className="main-title">خدماتنا</h1>
           <p className="subtitle">أهلاً بك في خدمة لتقديم خدمات الحرفيين المحترفين</p>
-          
+
           <div className="search-container">
             <div className="search-wrapper">
               <span className="search-icon">🔍</span>
@@ -970,8 +979,8 @@ export default function ServicesPage() {
         </header>
 
         <section className="categories-section">
-          <CategoriesCarousel 
-            categories={categories} 
+          <CategoriesCarousel
+            categories={categories}
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
           />
@@ -1037,13 +1046,13 @@ export default function ServicesPage() {
                     </div>
 
                     <div className="card-actions">
-                      <button 
+                      <button
                         className="btn btn-primary"
                         onClick={() => handleOrderNow(worker)}
                       >
                         اطلب الآن
                       </button>
-                      <button 
+                      <button
                         className="btn btn-secondary"
                         onClick={() => handleViewProfile(worker)}
                       >
@@ -1058,7 +1067,7 @@ export default function ServicesPage() {
             <div className="no-results">
               <div className="no-results-icon">🔍</div>
               <p className="no-results-text">لم نجد نتائج مطابقة لبحثك</p>
-              <p style={{marginTop: '12px', color: '#9CA3AF'}}>جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
+              <p style={{ marginTop: '12px', color: '#9CA3AF' }}>جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
             </div>
           )}
         </section>

@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Heart, Activity, Sparkles, ArrowLeft } from 'lucide-react';
-import meImage from '../assets/Images/electrical.webp';
+// import meImage from '../assets/Images/electrical.webp';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const fallbackUser = {
-  email: 'user@example.com',
-  name: 'مستخدم جديد',
-  address: '—',
-  phone: '—',
-  city: '—',
-  job: '',
-  image: meImage,
+    email: 'user@example.com',
+    name: 'مستخدم جديد',
+    address: '—',
+    phone: '—',
+    city: '—',
+    job: '',
+    image: '',
 };
 
 const settingsItems = [
-    { 
-        title: "تغيير كلمة المرور", 
-        description: "ينصح بالتغيير بشكل دوري للحفاظ على أمان حسابك." 
-    },
-    { 
-        title: "تفضيلات الإشعارات", 
-        description: "تحكم في الإشعارات التي تصلك من الخدمة." 
+    {
+        id: 'password',
+        title: "تغيير كلمة المرور",
+        description: "ينصح بالتغيير بشكل دوري للحفاظ على أمان حسابك."
     },
 ];
 
@@ -36,32 +33,32 @@ const emptyStates = {
 };
 
 const ProfileCard = ({ user }) => (
-  <div className="profile-card">
-    <div className="profile-card-content">
-      <img 
-        src={user.image || meImage} 
-        alt={`صورة ${user.name || 'المستخدم'}`} 
-        className="profile-avatar"
-      />
-      <div className="profile-text-wrapper">
-        <h3 className="profile-name">{user.name}</h3>
-        <p className="profile-detail">الدور: {user.role === 'worker' ? 'عامل' : 'مستخدم'}</p>
-        {user.role === 'worker' && (
-          <p className="profile-detail">
-            التخصص: {user.profession_ar || 'غير محدد'}
-          </p>
-        )}
-        <p className="profile-detail">المدينة: {user.city || 'غير محددة'}</p>
-      </div>
+    <div className="profile-card">
+        <div className="profile-card-content">
+            <img
+                src={user.image || ''}
+                alt={`صورة ${user.name || 'المستخدم'}`}
+                className="profile-avatar"
+            />
+            <div className="profile-text-wrapper">
+                <h3 className="profile-name">{user.name}</h3>
+                <p className="profile-detail">الدور: {user.role === 'worker' ? 'عامل' : 'مستخدم'}</p>
+                {user.role === 'worker' && (
+                    <p className="profile-detail">
+                        التخصص: {user.profession_ar || 'غير محدد'}
+                    </p>
+                )}
+                <p className="profile-detail">المدينة: {user.city || 'غير محددة'}</p>
+            </div>
+        </div>
     </div>
-  </div>
 );
 
 const PersonalInfoForm = ({ user, onSave }) => {
     const [formData, setFormData] = useState(user || fallbackUser);
 
     useEffect(() => {
-      setFormData(user || fallbackUser);
+        setFormData(user || fallbackUser);
     }, [user]);
 
     const handleChange = (e) => {
@@ -79,25 +76,25 @@ const PersonalInfoForm = ({ user, onSave }) => {
                 <Sparkles size={24} color="#3B82F6" />
                 <h2 className="section-title">معلوماتي الشخصية</h2>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">البريد الإلكتروني</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            value={formData.email} 
+                        <input
+                            type="email"
+                            id="email"
+                            value={formData.email}
                             onChange={handleChange}
                             className="form-input"
                         />
                     </div>
                     <div className="form-group">
                         <label htmlFor="name" className="form-label">الاسم</label>
-                        <input 
-                            type="text" 
-                            id="name" 
-                            value={formData.name} 
+                        <input
+                            type="text"
+                            id="name"
+                            value={formData.name}
                             onChange={handleChange}
                             className="form-input"
                         />
@@ -107,20 +104,20 @@ const PersonalInfoForm = ({ user, onSave }) => {
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="address" className="form-label">العنوان</label>
-                        <input 
-                            type="text" 
-                            id="address" 
-                            value={formData.address} 
+                        <input
+                            type="text"
+                            id="address"
+                            value={formData.address}
                             onChange={handleChange}
                             className="form-input"
                         />
                     </div>
                     <div className="form-group">
                         <label htmlFor="phone" className="form-label">رقم الهاتف</label>
-                        <input 
-                            type="tel" 
-                            id="phone" 
-                            value={formData.phone} 
+                        <input
+                            type="tel"
+                            id="phone"
+                            value={formData.phone}
                             onChange={handleChange}
                             className="form-input"
                         />
@@ -138,17 +135,133 @@ const PersonalInfoForm = ({ user, onSave }) => {
     );
 };
 
-const AccountSettingsList = () => (
+const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(oldPassword, newPassword, confirmPassword);
+    };
+
+    return (
+        <div className="modal-backdrop">
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h3 className="modal-title">تغيير كلمة المرور</h3>
+                    <button type="button" className="close-btn" onClick={onClose}>×</button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group mb-4">
+                        <label className="form-label">كلمة السر القديمة</label>
+                        <input
+                            type="password"
+                            className="form-input"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="form-group mb-4">
+                        <label className="form-label">كلمة السر الجديدة</label>
+                        <input
+                            type="password"
+                            className="form-input"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="form-group mb-6">
+                        <label className="form-label">تأكيد كلمة السر</label>
+                        <input
+                            type="password"
+                            className="form-input"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="modal-actions">
+                        <button type="submit" className="save-btn w-full justify-center">
+                            تحديث كلمة المرور
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <style jsx>{`
+                .modal-backdrop {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    backdrop-filter: blur(4px);
+                }
+                .modal-content {
+                    background: white;
+                    padding: 32px;
+                    border-radius: 24px;
+                    width: 100%;
+                    max-width: 450px;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+                    animation: scaleIn 0.3s ease;
+                }
+                .modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                }
+                .modal-title {
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: #1F2937;
+                }
+                .close-btn {
+                    background: none;
+                    border: none;
+                    font-size: 28px;
+                    cursor: pointer;
+                    color: #6B7280;
+                }
+                .mb-4 { margin-bottom: 16px; }
+                .mb-6 { margin-bottom: 24px; }
+                .w-full { width: 100%; }
+                .justify-center { justify-content: center; }
+                @keyframes scaleIn {
+                    from { transform: scale(0.9); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+            `}</style>
+        </div>
+    );
+};
+
+const AccountSettingsList = ({ onOpenModal }) => (
     <section className="settings-list-container">
         <div className="section-header">
             <Sparkles size={24} color="#3B82F6" />
             <h2 className="section-title">إعدادات الحساب</h2>
         </div>
-        
+
         {settingsItems.map((item, index) => (
-            <div 
-                key={index} 
+            <div
+                key={index}
                 className="setting-item"
+                onClick={() => {
+                    if (item.id === 'password') {
+                        onOpenModal();
+                    }
+                }}
             >
                 <div className="setting-details">
                     <h3 className="setting-title">{item.title}</h3>
@@ -163,27 +276,66 @@ const AccountSettingsList = () => (
 const UserSettingsPage = () => {
     const { user, updateUser } = useAuth();
     const mergedUser = user
-      ? {
-          name: user.fullName || user.name || fallbackUser.name,
-          email: user.email || fallbackUser.email,
-          address: user.address || fallbackUser.address,
-          phone: user.phoneNumber || user.phone || fallbackUser.phone,
-          city: user.city || fallbackUser.city,
-          job: user.profession_ar || fallbackUser.job,
-          image: user.image || fallbackUser.image,
-          role: user.role || 'user',
-          profession_ar: user.profession_ar || null,
+        ? {
+            name: user.fullName || user.name || fallbackUser.name,
+            email: user.email || fallbackUser.email,
+            address: user.address || fallbackUser.address,
+            phone: user.phoneNumber || user.phone || fallbackUser.phone,
+            city: user.city || fallbackUser.city,
+            job: user.profession_ar || fallbackUser.job,
+            // Check profilePhoto (used in AuthContext) and fallback to image or empty string
+            image: user.profilePhoto || user.image || user.photo || fallbackUser.image,
+            role: user.role || 'user',
+            profession_ar: user.profession_ar || null,
         }
-      : fallbackUser;
+        : fallbackUser;
 
     const handleSave = (data) => {
-      updateUser?.({
-        fullName: data.name,
-        email: data.email,
-        city: data.city,
-        address: data.address,
-        phoneNumber: data.phone,
-      });
+        try {
+            updateUser?.({
+                fullName: data.name,
+                email: data.email,
+                city: data.city,
+                address: data.address,
+                phoneNumber: data.phone,
+            });
+            // Immediate UI feedback
+            alert('تم حفظ التغييرات بنجاح!');
+        } catch (error) {
+            console.error("Error saving user settings:", error);
+            alert('حدث خطأ أثناء حفظ التغييرات.');
+        }
+    };
+
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+    const handlePasswordChange = (oldPassword, newPassword, confirmPassword) => {
+        if (!user) return;
+
+        // Validation logic
+        if (user.password && user.password !== oldPassword) {
+            alert('كلمة المرور القديمة غير صحيحة');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            alert('كلمة المرور الجديدة وتأكيدها غير متطابقين');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+            return;
+        }
+
+        try {
+            updateUser({ password: newPassword });
+            alert('تم تغيير كلمة المرور بنجاح');
+            setIsPasswordModalOpen(false);
+        } catch (error) {
+            console.error(error);
+            alert('حدث خطأ أثناء تغيير كلمة المرور');
+        }
     };
 
     return (
@@ -207,7 +359,13 @@ const UserSettingsPage = () => {
                     </div>
                 </div>
 
-                <AccountSettingsList />
+                <AccountSettingsList onOpenModal={() => setIsPasswordModalOpen(true)} />
+
+                <ChangePasswordModal
+                    isOpen={isPasswordModalOpen}
+                    onClose={() => setIsPasswordModalOpen(false)}
+                    onSave={handlePasswordChange}
+                />
 
             </main>
 

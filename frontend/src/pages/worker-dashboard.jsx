@@ -625,21 +625,7 @@ export default function WorkerDashboard() {
             </div>
           </div>
 
-          <ul className="nav-list">
-            <li className="nav-item active">
-              <span>نظرة عامة</span>
-            </li>
-            <li className="nav-item">
-              <span>حجوزاتي</span>
-              <span className="badge-muted">قريباً</span>
-            </li>
-            <li className="nav-item">
-              <span>ملفي الشخصي</span>
-            </li>
-            <li className="nav-item">
-              <span>الأرباح والتسويات</span>
-            </li>
-          </ul>
+
 
           <div className="nav-footer">
             {unreadCount > 0 ? (

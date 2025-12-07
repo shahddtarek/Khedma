@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Sparkles, 
+  Sparkles,
   ArrowLeft,
   Check,
   ChevronRight,
@@ -9,13 +9,8 @@ import {
 } from "lucide-react";
 import { mainCategories, detailedCategories } from '../data/serviceCategoriesData';
 
-// ------------------------------
-// Categories Data
-// ------------------------------
-// ------------------------------
-// Components
-// ------------------------------
-const CategoryCard = ({ title, icon: Icon, color, bgGradient, description, delay, categoryKey }) => {
+
+const CategoryCard = ({ title, icon: Icon, color, bgGradient, description, delay, categoryKey, onArrowClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
@@ -23,6 +18,11 @@ const CategoryCard = ({ title, icon: Icon, color, bgGradient, description, delay
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  const handleArrowClick = (e) => {
+    e.stopPropagation();
+    if (onArrowClick) onArrowClick();
   };
 
   return (
@@ -47,7 +47,7 @@ const CategoryCard = ({ title, icon: Icon, color, bgGradient, description, delay
             className="category-icon-bg"
             style={{ backgroundColor: color }}
             animate={{
-              boxShadow: isHovered 
+              boxShadow: isHovered
                 ? `0 0 0 8px ${color}15, 0 8px 24px ${color}40`
                 : `0 0 0 0px ${color}00, 0 4px 12px ${color}20`
             }}
@@ -71,18 +71,20 @@ const CategoryCard = ({ title, icon: Icon, color, bgGradient, description, delay
         </div>
 
         {/* Bottom Arrow */}
-        <motion.div 
+        {/* RTL Logic: Arrow points Left (Next). On hover, it should move Left to indicate direction. */}
+        <motion.div
           className="category-arrow"
           animate={{
             x: isHovered ? -8 : 0,
           }}
           style={{ color }}
+          onClick={handleArrowClick}
         >
           <ArrowLeft size={20} strokeWidth={3} />
         </motion.div>
 
         {/* Decorative Corner */}
-        <motion.div 
+        <motion.div
           className="category-corner"
           style={{ backgroundColor: color }}
           animate={{
@@ -130,7 +132,7 @@ const SubServiceCard = ({ name, icon: Icon, features, color, delay }) => {
               </span>
             </div>
           </div>
-          
+
           <motion.div
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={{ duration: 0.3 }}
@@ -240,12 +242,10 @@ const CategoriesCarousel = ({ categories }) => {
     return () => window.removeEventListener('resize', updateItemsPerView);
   }, []);
 
-  // إعادة تعيين الفهرس عند تغيير عدد العناصر المعروضة
   useEffect(() => {
     setCurrentIndex(0);
   }, [itemsPerView]);
 
-  // إذا كان عدد العناصر أقل من أو يساوي العناصر المعروضة، لا نحتاج للسلايدر
   const needsCarousel = categories.length > itemsPerView;
   const maxIndex = needsCarousel ? Math.max(0, categories.length - itemsPerView) : 0;
   const canScrollPrev = needsCarousel && currentIndex > 0;
@@ -263,28 +263,28 @@ const CategoriesCarousel = ({ categories }) => {
     }
   };
 
-  // حساب النسبة المئوية للتحريك بناءً على عدد العناصر المعروضة
   const translateX = currentIndex * (100 / itemsPerView);
 
   return (
     <div className="carousel-container">
+      {/* Right Button (Physically Right in RTL) -> Controls Previous (Moves View Right) */}
       {needsCarousel && (
         <button
-          className={`carousel-nav-btn carousel-nav-right ${!canScrollNext ? 'disabled' : ''}`}
-          onClick={scrollNext}
-          disabled={!canScrollNext}
-          aria-label="التالي"
+          className={`carousel-nav-btn carousel-nav-right ${!canScrollPrev ? 'disabled' : ''}`}
+          onClick={scrollPrev}
+          disabled={!canScrollPrev}
+          aria-label="السابق"
         >
           <ChevronRight size={24} />
         </button>
       )}
-      
+
       <div className="carousel-wrapper" ref={carouselRef}>
         <div
           className="carousel-track"
           ref={trackRef}
           style={{
-            transform: needsCarousel ? `translateX(-${translateX}%)` : 'translateX(0)',
+            transform: needsCarousel ? `translateX(${translateX}%)` : 'translateX(0)',
           }}
         >
           {categories.map((cat, idx) => (
@@ -297,18 +297,20 @@ const CategoriesCarousel = ({ categories }) => {
                 description={cat.description}
                 categoryKey={cat.key}
                 delay={idx * 0.08}
+                onArrowClick={scrollNext}
               />
             </div>
           ))}
         </div>
       </div>
 
+      {/* Left Button (Physically Left in RTL) -> Controls Next (Moves View Left) */}
       {needsCarousel && (
         <button
-          className={`carousel-nav-btn carousel-nav-left ${!canScrollPrev ? 'disabled' : ''}`}
-          onClick={scrollPrev}
-          disabled={!canScrollPrev}
-          aria-label="السابق"
+          className={`carousel-nav-btn carousel-nav-left ${!canScrollNext ? 'disabled' : ''}`}
+          onClick={scrollNext}
+          disabled={!canScrollNext}
+          aria-label="التالي"
         >
           <ChevronLeft size={24} />
         </button>
@@ -377,13 +379,13 @@ export default function ServiceCategories() {
                 color={cat.color}
                 icon={cat.icon}
                 categoryKey={
-                  cat.title === "الكهرباء" ? "electricity" : 
-                  cat.title === "السباكة" ? "plumbing" : 
-                  cat.title === "النجارة" ? "carpentry" : 
-                  cat.title === "الدهانات" ? "painting" :
-                  cat.title === "صيانة الأجهزة المنزلية" ? "home-appliances" :
-                  cat.title === "صيانة الإلكترونيات" ? "electronics" :
-                  cat.key || "other"
+                  cat.title === "الكهرباء" ? "electricity" :
+                    cat.title === "السباكة" ? "plumbing" :
+                      cat.title === "النجارة" ? "carpentry" :
+                        cat.title === "الدهانات" ? "painting" :
+                          cat.title === "صيانة الأجهزة المنزلية" ? "home-appliances" :
+                            cat.title === "صيانة الإلكترونيات" ? "electronics" :
+                              cat.key || "other"
                 }
               />
             ))}

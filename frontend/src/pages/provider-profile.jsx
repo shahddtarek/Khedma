@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import * as dataService from '../services/dataService';
 import { detailedCategories } from '../data/serviceCategoriesData';
+import { CheckCircle2, ChevronRight, Star } from 'lucide-react';
 import example1 from '../assets/Images/example1.jpeg';
 import example2 from '../assets/Images/example2.jpeg';
 import example3 from '../assets/Images/example3.jpeg';
@@ -23,7 +24,7 @@ export default function ServiceProviderProfile() {
     phone: '',
     appointmentDate: '',
   });
-  
+
   useEffect(() => {
     if (user && modalOpen) {
       setFormData(prev => ({
@@ -43,7 +44,7 @@ export default function ServiceProviderProfile() {
   useEffect(() => {
     // Scroll to top on page load
     window.scrollTo(0, 0);
-    
+
     if (workerId) {
       const worker = dataService.getUserById(workerId);
       if (worker) {
@@ -77,9 +78,8 @@ export default function ServiceProviderProfile() {
     summary:
       providerSource?.bio?.trim() ||
       (providerSource
-        ? `خبرة أكثر من ${providerSource.yearsExperience || providerSource.yearsExp || 5} سنوات في أعمال ${
-            providerSource.profession_ar || 'الخدمات'
-          }. موثوق من خدمة.`
+        ? `خبرة أكثر من ${providerSource.yearsExperience || providerSource.yearsExp || 5} سنوات في أعمال ${providerSource.profession_ar || 'الخدمات'
+        }. موثوق من خدمة.`
         : 'خبرة أكثر من 10 سنوات في أعمال السباكة والصرف الصحي. موثوق من خدمة.'),
     rating: providerSource?.rating || 4.8,
     reviewsCount: providerSource?.completedJobs || 125,
@@ -117,29 +117,29 @@ export default function ServiceProviderProfile() {
 
   const services = matchedCategory
     ? matchedCategory.subServices.map((sub) => ({
-        label: sub.name,
-        features: sub.features,
-      }))
+      label: sub.name,
+      features: sub.features,
+    }))
     : [
-        { label: 'إصلاح وصيانة المواسير', features: [] },
-        { label: 'كشف تسربات المياه', features: [] },
-        { label: 'تأسيس شبكات السباكة', features: [] },
-        { label: 'تركيب الأدوات الصحية', features: [] },
-        { label: 'تجديد سباكة الحمامات', features: [] },
-        { label: 'صيانة وتركيب السخانات', features: [] },
-      ];
+      { label: 'إصلاح وصيانة المواسير', features: [] },
+      { label: 'كشف تسربات المياه', features: [] },
+      { label: 'تأسيس شبكات السباكة', features: [] },
+      { label: 'تركيب الأدوات الصحية', features: [] },
+      { label: 'تجديد سباكة الحمامات', features: [] },
+      { label: 'صيانة وتركيب السخانات', features: [] },
+    ];
 
   const availability = provider.availableDays.length
     ? provider.availableDays.map((day) => ({
-        days: dayLabels[day] || day,
-        time: provider.availableHours || 'مرن حسب الاتفاق',
-        closed: false,
-      }))
+      days: dayLabels[day] || day,
+      time: provider.availableHours || 'مرن حسب الاتفاق',
+      closed: false,
+    }))
     : [
-        { days: 'الإثنين - الخميس', time: 'من 5:00 م حتى 9:00 م', closed: false },
-        { days: 'الجمعة', time: 'من 12:00 م حتى 9:00 م', closed: false },
-        { days: 'السبت - الأحد', time: 'عطلة', closed: true },
-      ];
+      { days: 'الإثنين - الخميس', time: 'من 5:00 م حتى 9:00 م', closed: false },
+      { days: 'الجمعة', time: 'من 12:00 م حتى 9:00 م', closed: false },
+      { days: 'السبت - الأحد', time: 'عطلة', closed: true },
+    ];
 
   const hasRatings = ratingSummary.total > 0;
   const roundedAverage = hasRatings ? ratingSummary.average.toFixed(1) : '0.0';
@@ -153,7 +153,7 @@ export default function ServiceProviderProfile() {
   const workImages =
     provider.workPhotos && provider.workPhotos.length > 0
       ? provider.workPhotos
-      : [example1, example2, example3, example4, example5, example6];
+      : [];
 
   const isElectrician =
     provider.professionKey === 'electrician' ||
@@ -164,8 +164,6 @@ export default function ServiceProviderProfile() {
   const electricServiceLabels = matchedCategory
     ? matchedCategory.subServices.map((sub) => sub.name)
     : services.map((service) => service.label);
-
-
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -614,160 +612,96 @@ export default function ServiceProviderProfile() {
           transform: scale(1);
         }
 
-        /* Sidebar */
+        /* Sidebar Services */
         .sidebar {
           position: sticky;
-          top: 120px;
-          height: fit-content;
+          top: 100px;
         }
 
         .services-grid {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 16px;
         }
 
         .service-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          background: #f8fafc;
           border-radius: 16px;
-          padding: 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          border: 2px solid #e5e7eb;
+          padding: 20px;
+          border: 1px solid #e2e8f0;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
-          position: relative;
-          overflow: hidden;
+          opacity: 0;
+          animation: slideUpFade 0.5s ease forwards;
         }
 
-        .service-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 4px;
-          height: 100%;
-          background: linear-gradient(135deg, #3b82f6, #38bdf8);
-          opacity: 0;
-          transition: opacity 0.3s ease;
+        @keyframes slideUpFade {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .service-card:hover {
-          border-color: #3b82f6;
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
-          transform: translateX(-4px);
+          background: white;
+          border-color: var(--accent-color);
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
         }
 
-        .service-card:hover::before {
-          opacity: 1;
+        .service-card-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .service-icon-box {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .service-name {
           font-weight: 700;
           color: #1e293b;
-          font-size: 15px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .service-name::before {
-          content: '✓';
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3b82f6, #38bdf8);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          font-weight: 700;
-          flex-shrink: 0;
+          font-size: 16px;
+          line-height: 1.4;
         }
 
         .service-features {
           margin: 0;
-          padding-right: 20px;
+          padding: 0;
           list-style: none;
-          color: #6b7280;
-          font-size: 13px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 12px;
         }
 
         .service-features li {
-          position: relative;
-          padding-right: 16px;
-        }
-
-        .service-features li::before {
-          content: '•';
-          position: absolute;
-          right: 0;
-          color: #3b82f6;
-          font-weight: 700;
-          font-size: 16px;
-        }
-
-        .electric-services-list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .electric-services-list li {
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: linear-gradient(135deg, #fef9c3, #fde68a);
-          border-radius: 14px;
-          padding: 12px 16px;
-          font-weight: 600;
-          color: #92400e;
-          box-shadow: 0 10px 25px rgba(251, 191, 36, 0.25);
-          transform: translateX(12px);
-          opacity: 0;
-          animation: slideIn 0.4s forwards;
+          gap: 10px;
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 500;
         }
 
-        .electric-services-list li:nth-child(even) {
-          background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-          color: #075985;
-          box-shadow: 0 10px 25px rgba(14, 165, 233, 0.25);
-        }
-
-        .pulse-dot {
-          width: 10px;
-          height: 10px;
+        .feature-dot {
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
-          background: #f97316;
-          box-shadow: 0 0 0 rgba(249, 115, 22, 0.7);
-          animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
-          }
-          70% {
-            box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
-          }
-        }
-
-        @keyframes slideIn {
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          opacity: 0.6;
         }
 
         .no-reviews {
@@ -1039,10 +973,10 @@ export default function ServiceProviderProfile() {
                 {availability.map((item, i) => (
                   <div key={i} className="availability-item">
                     <span style={{ color: '#64748b', fontSize: '14px' }}>{item.days}</span>
-                    <span style={{ 
-                      fontSize: '14px', 
-                      color: item.closed ? '#ef4444' : '#10b981', 
-                      fontWeight: 500 
+                    <span style={{
+                      fontSize: '14px',
+                      color: item.closed ? '#ef4444' : '#10b981',
+                      fontWeight: 500
                     }}>
                       {item.time}
                     </span>
@@ -1050,16 +984,18 @@ export default function ServiceProviderProfile() {
                 ))}
               </section>
 
-              <section className="card">
-                <h2 className="section-title">أمثلة الأعمال</h2>
-                <div className="work-grid">
-                  {workImages.map((imageSrc, index) => (
-                    <div key={imageSrc} className="work-item">
-                      <img src={imageSrc} alt={`مثال عمل رقم ${index + 1}`} />
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {workImages.length > 0 && (
+                <section className="card">
+                  <h2 className="section-title">أمثلة الأعمال</h2>
+                  <div className="work-grid">
+                    {workImages.map((imageSrc, index) => (
+                      <div key={imageSrc} className="work-item">
+                        <img src={imageSrc} alt={`مثال عمل رقم ${index + 1}`} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               <section className="card">
                 <h2 className="section-title">التقييمات</h2>
@@ -1084,25 +1020,25 @@ export default function ServiceProviderProfile() {
                   <div className="rating-bars">
                     {ratingBars.map((r) => (
                       <div key={r.stars} className="rating-bar-row">
-                        <span style={{ 
-                          color: '#64748b', 
-                          fontSize: '14px', 
-                          width: '20px', 
-                          textAlign: 'center' 
+                        <span style={{
+                          color: '#64748b',
+                          fontSize: '14px',
+                          width: '20px',
+                          textAlign: 'center'
                         }}>
                           {r.stars}
                         </span>
                         <div className="rating-bar">
-                          <div 
-                            className="rating-bar-fill" 
+                          <div
+                            className="rating-bar-fill"
                             style={{ width: `${r.percent}%` }}
                           ></div>
                         </div>
-                        <span style={{ 
-                          color: '#64748b', 
-                          fontSize: '14px', 
-                          width: '40px', 
-                          textAlign: 'right' 
+                        <span style={{
+                          color: '#64748b',
+                          fontSize: '14px',
+                          width: '40px',
+                          textAlign: 'right'
                         }}>
                           {r.percent}%
                         </span>
@@ -1152,31 +1088,41 @@ export default function ServiceProviderProfile() {
             <aside className="sidebar">
               <div className="card">
                 <h2 className="section-title">الخدمات المقدمة</h2>
-                {isElectrician ? (
-                  <ul className="electric-services-list">
-                    {electricServiceLabels.map((label, index) => (
-                      <li key={label} style={{ animationDelay: `${index * 0.05}s` }}>
-                        <span className="pulse-dot" />
-                        {label}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="services-grid">
-                    {services.map((service) => (
-                      <div key={service.label} className="service-card">
-                        <span className="service-name">{service.label}</span>
-                        {service.features && service.features.length > 0 && (
-                          <ul className="service-features">
-                            {service.features.map((feature) => (
-                              <li key={feature}>{feature}</li>
-                            ))}
-                          </ul>
-                        )}
+                <div className="services-grid">
+                  {services.map((service, index) => (
+                    <div
+                      key={service.label}
+                      className="service-card"
+                      style={{
+                        animationDelay: `${index * 0.1}s`,
+                        '--accent-color': matchedCategory?.color || '#3B82F6'
+                      }}
+                    >
+                      <div className="service-card-header">
+                        <span className="service-icon-box" style={{ backgroundColor: matchedCategory?.color || '#3B82F6' }}>
+                          {/* Use category icon or fallback check */}
+                          {matchedCategory?.icon ? (
+                            <matchedCategory.icon size={18} color="white" strokeWidth={2.5} />
+                          ) : (
+                            <CheckCircle2 size={18} color="white" />
+                          )}
+                        </span>
+                        <h3 className="service-name">{service.label}</h3>
                       </div>
-                    ))}
-                  </div>
-                )}
+
+                      {service.features && service.features.length > 0 && (
+                        <ul className="service-features">
+                          {service.features.map((feature, idx) => (
+                            <li key={idx}>
+                              <div className="feature-dot" style={{ backgroundColor: matchedCategory?.color || '#3B82F6' }} />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </aside>
           </div>
@@ -1185,8 +1131,8 @@ export default function ServiceProviderProfile() {
 
       {modalOpen && (
         <>
-          <div 
-            onClick={() => setModalOpen(false)} 
+          <div
+            onClick={() => setModalOpen(false)}
             className="order-modal-backdrop"
           ></div>
           <div className="order-modal">
@@ -1195,10 +1141,10 @@ export default function ServiceProviderProfile() {
             <form onSubmit={handleSubmit}>
               <div className="order-form-group">
                 <label>نوع الخدمة</label>
-                <select 
+                <select
                   className="order-form-input"
-                  value={formData.serviceType} 
-                  onChange={e => setFormData({ ...formData, serviceType: e.target.value })} 
+                  value={formData.serviceType}
+                  onChange={e => setFormData({ ...formData, serviceType: e.target.value })}
                 >
                   <option value="">-- اختر خدمة --</option>
                   {services.map(s => (
@@ -1212,46 +1158,46 @@ export default function ServiceProviderProfile() {
                 <label>وصف المشكلة</label>
                 <textarea
                   className="order-form-input order-form-textarea"
-                  value={formData.description} 
-                  onChange={e => setFormData({ ...formData, description: e.target.value })} 
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   placeholder="اشرح احتياجك ليقدر المزود مدة وتكلفة الخدمة"
                 />
               </div>
               <div className="order-form-group">
                 <label>الاسم بالكامل</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="order-form-input"
-                  value={formData.name} 
-                  onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div className="order-form-group">
                 <label>رقم الهاتف</label>
-                <input 
-                  type="tel" 
+                <input
+                  type="tel"
                   className="order-form-input"
-                  value={formData.phone} 
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })} 
+                  value={formData.phone}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="رقم هاتفك لتأكيد الموعد"
                 />
               </div>
               <div className="order-form-group">
                 <label>ميعاد الزيارة</label>
-                <input 
-                  type="datetime-local" 
+                <input
+                  type="datetime-local"
                   className="order-form-input"
-                  value={formData.appointmentDate} 
-                  onChange={e => setFormData({ ...formData, appointmentDate: e.target.value })} 
+                  value={formData.appointmentDate}
+                  onChange={e => setFormData({ ...formData, appointmentDate: e.target.value })}
                 />
               </div>
               <div className="order-modal-actions">
                 <button type="submit" className="order-submit-btn" disabled={isSubmitting}>
                   {isSubmitting ? 'يتم الإرسال...' : 'تأكيد الطلب'}
                 </button>
-                <button 
-                  type="button" 
-                  className="order-cancel-btn" 
+                <button
+                  type="button"
+                  className="order-cancel-btn"
                   onClick={() => setModalOpen(false)}
                 >
                   إلغاء

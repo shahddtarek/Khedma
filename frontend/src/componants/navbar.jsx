@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import KhidmahLogo from '../assets/Images/Logo.jpg';
 import * as dataService from '../services/dataService';
@@ -64,17 +64,17 @@ export default function NavBar() {
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
         
         .navbar {
-          background: ${scrolled 
-            ? 'rgba(255, 255, 255, 0.95)' 
-            : 'rgba(255, 255, 255, 1)'};
+          background: ${scrolled
+          ? 'rgba(255, 255, 255, 0.95)'
+          : 'rgba(255, 255, 255, 1)'};
           backdrop-filter: blur(20px);
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 18px 48px;
-          border-bottom: ${scrolled 
-            ? '1px solid rgba(229, 231, 235, 0.8)' 
-            : '1px solid #e8e8e8'};
+          border-bottom: ${scrolled
+          ? '1px solid rgba(229, 231, 235, 0.8)'
+          : '1px solid #e8e8e8'};
           font-weight: 600;
           font-size: 1.1rem;
           direction: rtl;
@@ -84,9 +84,9 @@ export default function NavBar() {
           right: 0;
           z-index: 1000;
           transition: all 0.3s ease;
-          box-shadow: ${scrolled 
-            ? '0 4px 20px rgba(0, 0, 0, 0.08)' 
-            : 'none'};
+          box-shadow: ${scrolled
+          ? '0 4px 20px rgba(0, 0, 0, 0.08)'
+          : 'none'};
         }
 
         .navbar-left {
@@ -338,39 +338,39 @@ export default function NavBar() {
       <nav className="navbar">
         <div className="navbar-left">
           <Link to="/" className="logo-link">
-            <img 
+            <img
               src={KhidmahLogo}
               alt="شعار خدمة"
               className="logo-image"
             />
           </Link>
           <div className="nav-links">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={`nav-link ${isActive('/') ? 'active' : ''}`}
             >
               الرئيسية
             </Link>
-            <Link 
-              to="/service-categories" 
+            <Link
+              to="/service-categories"
               className={`nav-link ${isActive('/service-categories') ? 'active' : ''}`}
             >
               الخدمات
             </Link>
-            <Link 
-              to="/service-search" 
+            <Link
+              to="/service-search"
               className={`nav-link ${isActive('/service-search') ? 'active' : ''}`}
             >
               اعثر على خدمتك
             </Link>
-            <Link 
-              to="/contact-us" 
+            <Link
+              to="/contact-us"
               className={`nav-link ${isActive('/contact-us') ? 'active' : ''}`}
             >
               تواصل معنا
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className={`nav-link ${isActive('/about') ? 'active' : ''}`}
             >
               معلومات عنا
@@ -388,6 +388,14 @@ export default function NavBar() {
               >
                 <Bell size={18} />
                 {notificationCount > 0 && <span className="notification-dot">{notificationCount}</span>}
+              </button>
+              <button
+                type="button"
+                className="notification-button"
+                onClick={() => navigate('/user-settings')}
+                aria-label="الإعدادات"
+              >
+                <Settings size={18} />
               </button>
               <button
                 type="button"

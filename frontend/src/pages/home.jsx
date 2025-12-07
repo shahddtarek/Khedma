@@ -1,33 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Sparkles, 
-  Droplets, 
-  Paintbrush, 
-  Hammer, 
-  Wrench, 
-  Zap,
-  Clock,
-  Search,
-  Settings,
-  Waves,
-  AlertCircle,
-  DoorOpen,
-  Armchair,
-  Wand2,
-  Palette,
-  Move,
-  ArrowLeft,
-  Check,
-  Mail, 
-  Instagram, 
-  Twitter, 
-  Facebook, 
-  Linkedin, 
-  ChevronLeft, 
-  ChevronRight, 
-  Star,
-  Phone  
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Sparkles,
+    Droplets,
+    Paintbrush,
+    Hammer,
+    Wrench,
+    Zap,
+    Clock,
+    Search,
+    Settings,
+    Waves,
+    AlertCircle,
+    DoorOpen,
+    Armchair,
+    Wand2,
+    Palette,
+    Move,
+    ArrowLeft,
+    Check,
+    Mail,
+    Instagram,
+    Twitter,
+    Facebook,
+    Linkedin,
+    ChevronLeft,
+    ChevronRight,
+    Star,
+    Phone
 } from 'lucide-react';
 import Himg from '../assets/Images/H.jpg';
 import Cimg from '../assets/Images/c.jpg';
@@ -60,7 +61,7 @@ const CRAFTSMEN_DATA = [
     },
     {
         name: "محمد إبراهيم",
-        job: "مهندس تكيفات", 
+        job: "مهندس تكيفات",
         rating: 4.8,
         reviews: 42,
         imgSrc: Himg,
@@ -69,19 +70,12 @@ const CRAFTSMEN_DATA = [
 ];
 
 const SERVICES_DATA = [
-    {  icon: Zap, title: "الكهرباء" , color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
-    { icon: Hammer, title: "النجارة" , color: "#eab308", bgGradient: "from-yellow-50 to-amber-50" },
+    { icon: Zap, title: "الكهرباء", color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
+    { icon: Hammer, title: "النجارة", color: "#eab308", bgGradient: "from-yellow-50 to-amber-50" },
     { icon: Droplets, title: "تنظيف", color: "#06b6d4", bgGradient: "from-cyan-50 to-sky-50" },
     { icon: Paintbrush, title: "الدهانات", color: "#f59e0b", bgGradient: "from-amber-50 to-orange-50" },
-    { icon: Wrench, title: "السباكة" , color: "#8b5cf6", bgGradient: "from-purple-50 to-violet-50" },
+    { icon: Wrench, title: "السباكة", color: "#8b5cf6", bgGradient: "from-purple-50 to-violet-50" },
 ];
-
-const testimonialClient = {
-    name: "سلمى منصور",
-    title: "صاحبة منزل",
-    quote: "خدمة ممتازة وحرفيون محترفون أنصح بشدة باستخدام هذه المنصة.",
-    img: Cimg
-};
 
 const CraftsmanCard = ({ craftsman, delay }) => {
     const navigate = useNavigate();
@@ -91,10 +85,10 @@ const CraftsmanCard = ({ craftsman, delay }) => {
         const stars = [];
         for (let i = 0; i < 5; i++) {
             stars.push(
-                <Star 
-                    key={i} 
-                    size={16} 
-                    fill={i < fullStars ? '#FFC107' : '#E0E0E0'} 
+                <Star
+                    key={i}
+                    size={16}
+                    fill={i < fullStars ? '#FFC107' : '#E0E0E0'}
                     strokeWidth={i < fullStars ? 0 : 1.5}
                     color={i < fullStars ? '#FFC107' : '#999'}
                 />
@@ -109,7 +103,7 @@ const CraftsmanCard = ({ craftsman, delay }) => {
                 <span className="status-tag">{craftsman.status}</span>
             )}
             <img src={craftsman.imgSrc} alt={craftsman.name} className="craftsman-image" />
-            
+
             <h3 className="craftsman-name">{craftsman.name}</h3>
             <p className="craftsman-job">{craftsman.job}</p>
 
@@ -149,7 +143,7 @@ const ServicesSection = () => (
                 <h2 className="detailed-heading">خدماتنا</h2>
                 <p className="detailed-subheading">اختر من بين مجموعة واسعة من الخدمات المتاحة</p>
             </div>
-            
+
             <div className="services-grid">
                 {SERVICES_DATA.map((service, index) => {
                     const IconComponent = service.icon;
@@ -174,7 +168,7 @@ const JoinUsSection = ({ onRegister }) => (
                 <div className="join-us-text">
                     <h2 className="join-us-title">انضم إلينا الآن</h2>
                     <p className="join-us-description">انضم إلى منصتنا لزيادة وصولك للعملاء وتنمية أعمالك.</p>
-                    
+
                     <div className="steps">
                         <div className="step-item">
                             <span className="step-number" style={{ backgroundColor: '#06b6d4' }}>1</span>
@@ -190,7 +184,7 @@ const JoinUsSection = ({ onRegister }) => (
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="join-us-action-card-wrapper">
                     <div className="join-us-action-card">
                         <button className="btn-create-account" type="button" onClick={onRegister}>
@@ -204,33 +198,165 @@ const JoinUsSection = ({ onRegister }) => (
     </section>
 );
 
-const TestimonialsSection = () => (
-    <section className="testimonials-section">
-        <div className="detailed-wrapper">
-            <div className="detailed-header">
-                <h2 className="detailed-heading">ثقة عملائنا</h2>
-                <p className="detailed-subheading">آراء عملائنا في خدماتنا</p>
-            </div>
-            
-            <div className="testimonial-content">
-                <button className="nav-arrow">
-                    <ChevronRight size={24} />
-                </button>
-                
-                <div className="testimonial-card">
-                    <img src={testimonialClient.img} alt={testimonialClient.name} className="testimonial-avatar" />
-                    <p className="quote">"{testimonialClient.quote}"</p>
-                    <h4 className="client-name">{testimonialClient.name}</h4>
-                    <p className="client-title">{testimonialClient.title}</p>
+const TESTIMONIALS_DATA = [
+    {
+        id: 1,
+        name: "سلمى منصور",
+        title: "صاحبة منزل",
+        quote: "تجربة رائعة بكل المقاييس. السباك وصل في الميعاد المحدد، وكان احترافياً جداً، وشرح لي المشكلة بوضوح قبل الإصلاح. تطبيق ممتاز!",
+        img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=faces"
+    },
+    {
+        id: 2,
+        name: "خالد العتيبي",
+        title: "مدير مطعم",
+        quote: "استجابة سريعة جداً في وقت متأخر من الليل. الكهربائي أنقذنا من كارثة حقيقية في المطبخ. الأسعار معقولة جداً مقارنة بالجودة.",
+        img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces"
+    },
+    {
+        id: 3,
+        name: "نادية حسن",
+        title: "مهندسة ديكور",
+        quote: "كمهندسة ديكور، أعتمد على هذا التطبيق للوصول لحرفيين ماهرين لمشاريعي. دقة في المواعيد وإتقان في التشطيبات.",
+        img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=faces"
+    },
+    {
+        id: 4,
+        name: "عمر فاروق",
+        title: "صاحب شركة ناشئة",
+        quote: "النظافة بعد العمل هي أهم شيء بالنسبة لي، وهذا ما وجدته مع النجارين هنا. عمل نظيف ومرتب وسريع.",
+        img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces"
+    }
+];
+
+const TestimonialsSection = () => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [direction, setDirection] = useState(0);
+
+    const slideVariants = {
+        enter: (direction) => ({
+            x: direction > 0 ? 100 : -100,
+            opacity: 0,
+            scale: 0.95
+        }),
+        center: {
+            zIndex: 1,
+            x: 0,
+            opacity: 1,
+            scale: 1,
+            transition: {
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+            }
+        },
+        exit: (direction) => ({
+            zIndex: 0,
+            x: direction < 0 ? 100 : -100,
+            opacity: 0,
+            scale: 0.95,
+            transition: {
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+            }
+        })
+    };
+
+    const swipe = (newDirection) => {
+        setDirection(newDirection);
+        setCurrentIndex((prevIndex) => {
+            let nextIndex = prevIndex + newDirection;
+            if (nextIndex < 0) nextIndex = TESTIMONIALS_DATA.length - 1;
+            if (nextIndex >= TESTIMONIALS_DATA.length) nextIndex = 0;
+            return nextIndex;
+        });
+    };
+
+    const currentTestimonial = TESTIMONIALS_DATA[currentIndex];
+
+    return (
+        <section className="testimonials-section">
+            <div className="detailed-wrapper">
+                <div className="detailed-header">
+                    <Sparkles size={24} color="#3B82F6" style={{ marginBottom: '10px' }} />
+                    <h2 className="detailed-heading">ماذا يقول عملاؤنا؟</h2>
+                    <p className="detailed-subheading">قصص نجاح حقيقية من أشخاص وثقوا بنا</p>
                 </div>
-                
-                <button className="nav-arrow">
-                    <ChevronLeft size={24} />
-                </button>
+
+                <div className="testimonial-slider-container">
+                    {/* Background decorations */}
+                    <div className="blob blob-1"></div>
+                    <div className="blob blob-2"></div>
+
+                    <div className="slider-controls">
+                        <button className="nav-btn prev-btn" onClick={() => swipe(-1)}>
+                            <ChevronRight size={28} />
+                        </button>
+
+                        <div className="card-animation-wrapper">
+                            <AnimatePresence initial={false} custom={direction} mode='wait'>
+                                <motion.div
+                                    key={currentIndex}
+                                    custom={direction}
+                                    variants={slideVariants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    className="premium-testimonial-card"
+                                >
+                                    <div className="card-top-accent"></div>
+                                    <div className="avatar-wrapper-premium">
+                                        <img
+                                            src={currentTestimonial.img}
+                                            alt={currentTestimonial.name}
+                                            className="premium-avatar"
+                                        />
+                                        <div className="quote-badge">
+                                            <span style={{ fontSize: '20px', lineHeight: 1 }}>❝</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="content-body">
+                                        <p className="premium-quote">{currentTestimonial.quote}</p>
+
+                                        <div className="divider"></div>
+
+                                        <div className="author-info">
+                                            <h4 className="author-name">{currentTestimonial.name}</h4>
+                                            <p className="author-role">{currentTestimonial.title}</p>
+                                        </div>
+
+                                        <div className="stars-row">
+                                            {[1, 2, 3, 4, 5].map(s => (
+                                                <Star key={s} size={14} fill="#FBBF24" color="#FBBF24" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
+
+                        <button className="nav-btn next-btn" onClick={() => swipe(1)}>
+                            <ChevronLeft size={28} />
+                        </button>
+                    </div>
+
+                    <div className="slider-dots">
+                        {TESTIMONIALS_DATA.map((_, idx) => (
+                            <span
+                                key={idx}
+                                className={`slider-dot ${idx === currentIndex ? 'active' : ''}`}
+                                onClick={() => {
+                                    setDirection(idx > currentIndex ? 1 : -1);
+                                    setCurrentIndex(idx);
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
-);
+        </section>
+    );
+};
 
 const FinalCTASection = ({ onRegister }) => (
     <section className="final-cta-section">
@@ -311,43 +437,30 @@ const HomePage = () => {
         <div className="page-wrapper" dir="rtl">
             {/* Hero Banner Section */}
             <section className="hero-section">
-                <div className="hero-banner">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="hero-banner"
+                >
                     <h2>اعثر على أفضل الحرفيين بسهولة</h2>
                     <p>استكشف خدماتنا واختر الحرفي المناسب لمنزلك أو مشروعك.</p>
-                    <button 
+                    <button
                         className="btn-primary"
                         onClick={() => navigate('/service-search')}
                     >
                         استعرض الحرفيين
                     </button>
-                </div>
+                </motion.div>
             </section>
 
-            {/* Search Results */}
-            <section className="results-section">
-                <div className="detailed-wrapper">
-                    <div className="detailed-header">
-                        <h2 className="detailed-heading">أفضل الحرفيين</h2>
-                        <p className="detailed-subheading">اختر من بين الحرفيين المتميزين</p>
-                    </div>
-                    
-                    <div className="craftsmen-grid">
-                        {CRAFTSMEN_DATA.map((craftsman, index) => (
-                            <CraftsmanCard 
-                                key={index} 
-                                craftsman={craftsman} 
-                                delay={index * 100}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            <ServicesSection/>
-            <JoinUsSection onRegister={goToRegister}/>
+
+            <ServicesSection />
+            <JoinUsSection onRegister={goToRegister} />
             <TestimonialsSection />
             <FinalCTASection onRegister={goToRegister} />
-            <FooterSection/>
+            <FooterSection />
 
             <style jsx>{`
                 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
@@ -763,75 +876,216 @@ const HomePage = () => {
                     box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
                 }
 
-                /* Testimonials */
-                .testimonial-content {
+                /* Testimonials Premium Styles */
+                .testimonial-slider-container {
+                    position: relative;
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 20px 0;
+                }
+
+                .slider-controls {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 24px;
+                    gap: 32px;
+                    margin-bottom: 24px;
                 }
 
-                .testimonial-card {
-                    background: #F9FAFB;
-                    border: 2px solid #E5E7EB;
+                .card-animation-wrapper {
+                    width: 100%;
+                    max-width: 550px;
+                    min-height: 380px; /* Force height to prevent layout shifts */
+                    position: relative;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .premium-testimonial-card {
+                    background: white;
                     border-radius: 24px;
-                    padding: 40px;
-                    text-align: center;
-                    flex: 1;
-                    max-width: 600px;
-                    transition: all 0.3s ease;
+                    padding: 0;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); /* Soft, premium shadow */
+                    border: 1px solid rgba(255, 255, 255, 0.8);
+                    position: absolute;
+                    width: 100%;
+                    overflow: hidden;
                 }
 
-                .testimonial-card:hover {
-                    border-color: #3B82F6;
-                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+                .card-top-accent {
+                    height: 8px;
+                    background: linear-gradient(90deg, #3B82F6, #38BDF8);
+                    width: 100%;
                 }
 
-                .testimonial-avatar {
-                    width: 80px;
-                    height: 80px;
+                .avatar-wrapper-premium {
+                    position: relative;
+                    width: 100px;
+                    height: 100px;
+                    margin: -50px auto 20px; /* Pull up to overlap top */
+                    top: 50px;
+                }
+
+                .premium-avatar {
+                    width: 100%;
+                    height: 100%;
                     border-radius: 50%;
                     object-fit: cover;
-                    margin: 0 auto 20px;
-                    border: 3px solid #E5E7EB;
+                    border: 4px solid white;
+                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
                 }
 
-                .quote {
+                .quote-badge {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 32px;
+                    height: 32px;
+                    background: #3B82F6;
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+                }
+
+                .content-body {
+                    padding: 60px 32px 32px;
+                    text-align: center;
+                }
+
+                .premium-quote {
+                    font-size: 17px;
+                    line-height: 1.7;
+                    color: #374151;
                     font-style: italic;
-                    color: #4B5563;
-                    font-size: 18px;
-                    line-height: 1.6;
-                    margin-bottom: 20px;
+                    margin-bottom: 24px;
                 }
 
-                .client-name {
+                .divider {
+                    width: 40px;
+                    height: 4px;
+                    background: #F3F4F6;
+                    margin: 0 auto 20px;
+                    border-radius: 2px;
+                }
+
+                .author-name {
+                    font-size: 20px;
                     font-weight: 700;
-                    color: #1F2937;
+                    color: #111827;
                     margin-bottom: 4px;
                 }
 
-                .client-title {
-                    color: #6B7280;
+                .author-role {
                     font-size: 14px;
+                    color: #6B7280;
+                    margin-bottom: 12px;
                 }
 
-                .nav-arrow {
-                    background: white;
-                    border: 2px solid #E5E7EB;
-                    color: #3B82F6;
+                .stars-row {
+                    display: flex;
+                    justify-content: center;
+                    gap: 4px;
+                }
+
+                /* Nav Buttons */
+                .nav-btn {
                     width: 48px;
                     height: 48px;
-                    border-radius: 12px;
+                    border-radius: 50%;
+                    background: white;
+                    border: 1px solid #E5E7EB;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    color: #6B7280;
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    z-index: 10;
                 }
 
-                .nav-arrow:hover {
-                    border-color: #3B82F6;
+                .nav-btn:hover {
+                    background: #2563EB;
+                    color: white;
+                    border-color: #2563EB;
                     transform: scale(1.1);
+                    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+                }
+
+                /* Dots */
+                .slider-dots {
+                    display: flex;
+                    justify-content: center;
+                    gap: 10px;
+                }
+
+                .slider-dot {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: #E5E7EB;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .slider-dot.active {
+                    background: #3B82F6;
+                    width: 24px;
+                    border-radius: 10px;
+                }
+
+                /* Background Blobs */
+                .blob {
+                    position: absolute;
+                    border-radius: 50%;
+                    filter: blur(40px);
+                    opacity: 0.5;
+                    z-index: 0;
+                }
+
+                .blob-1 {
+                    top: -20px;
+                    left: 20%;
+                    width: 200px;
+                    height: 200px;
+                    background: #DBEAFE;
+                    animation: floatBlob 8s infinite alternate;
+                }
+
+                .blob-2 {
+                    bottom: -40px;
+                    right: 20%;
+                    width: 250px;
+                    height: 250px;
+                    background: #F3E8FF;
+                    animation: floatBlob 10s infinite alternate-reverse;
+                }
+
+                @keyframes floatBlob {
+                    0% { transform: translate(0, 0); }
+                    100% { transform: translate(20px, 40px); }
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .slider-controls {
+                        gap: 16px;
+                    }
+                    
+                    .nav-btn {
+                        position: absolute;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: 40px;
+                        height: 40px;
+                    }
+
+                    .prev-btn { right: -10px; }
+                    .next-btn { left: -10px; }
                 }
 
                 /* Final CTA */
